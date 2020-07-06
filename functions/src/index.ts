@@ -2,6 +2,7 @@ import * as functions from 'firebase-functions';
 import { initializeApp } from 'firebase-admin';
 import { Request, Response } from 'express';
 import { createProbot, Options } from 'probot'
+import * as SendTipCommand from './commands/sendTip';
 
 const probotEnv = functions.config().probot;
 
@@ -36,26 +37,7 @@ bot.load(robot => {
     await context.github.issues.createComment(params)
   });
 
-  robot.on('issue_comment.created', async context => {
-    // const params = context.issue({ body: 'Hello World!' })
-
-    // TODO: filter for 'created' action
-    // context.payload.action
-
-    // TODO: check for tip command in comment body
-    // context.payload.comment.body
-
-    const senderId = context.payload.sender.id;
-    const sendedLogin = context.payload.sender.login;
-    const senderUrl = context.payload.sender.url;
-
-    console.log(`comment created by: ${sendedLogin}, id: ${senderId}, sender url: ${senderUrl}`);
-
-    // Post a comment on the issue
-    // await context.github.issues.createComment(params)
-  });
-
-  // tasks = registerTasks(robot, store);
+  SendTipCommand.initListeners(robot);
 });
 
 /**

@@ -1,8 +1,17 @@
 # github-tipbot
 
-> A GitHub App built with [Probot](https://github.com/probot/probot) that A TurtleCoin tipbot for Github
+A TurtleCoin tipbot for Github built with [Probot](https://github.com/probot/probot)
 
 ## Setup
+
+### Configure firebase environment variables
+
+```sh
+# Set the following probot variables:
+firebase functions:config:set probot.app_id="YOUR GITHUB APP ID"
+firebase functions:config:set probot.webhook_secret="YOUR WEBHOOK SECRET"
+firebase functions:config:set probot.private_key="YOUR PRIVATE KEY"
+```
 
 ```sh
 # Install dependencies

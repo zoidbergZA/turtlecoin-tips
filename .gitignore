@@ -5,3 +5,8 @@ npm-debug.log
 .env
 coverage
 lib
+
+# Firebase
+.firebase/*
+firebase-debug.log
+.firebaserc

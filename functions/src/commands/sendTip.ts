@@ -1,43 +1,155 @@
+import * as admin from 'firebase-admin';
+import { TrtlApp, Account, ServiceError } from 'trtl-apps';
 import { Application } from 'probot'
 import Webhooks from '@octokit/webhooks';
-import { TipCommandInfo } from '../types';
+import { AppUser, TipCommandInfo } from '../types';
+import { AppError } from '../appError';
+import { Octokit } from '@octokit/rest';
+
+const octokit = new Octokit({});
 
 export function initListeners(bot: Application) {
   bot.on('issue_comment.created', async context => {
-  // const params = context.issue({ body: 'Hello World!' })
+    if (context.payload.action !== 'created') {
+      return;
+    }
 
-  if (context.payload.action !== 'created') {
-    return;
-  }
+    // check for tip command in comment body
+    const commentText = context.payload.comment.body
 
-  // check for tip command in comment body
-  const commentText = context.payload.comment.body
+    if (!commentText.startsWith('.tip ')) {
+      return;
+    }
 
-  if (!commentText.startsWith('.tip ')) {
-    return;
-  }
+    const senderId = context.payload.sender.id;
+    const sendedLogin = context.payload.sender.login;
+    const senderUrl = context.payload.sender.url;
 
-  const senderId = context.payload.sender.id;
-  const sendedLogin = context.payload.sender.login;
-  const senderUrl = context.payload.sender.url;
+    console.log(`comment created by: ${sendedLogin}, id: ${senderId}, sender url: ${senderUrl}`);
 
-  console.log(`comment created by: ${sendedLogin}, id: ${senderId}, sender url: ${senderUrl}`);
+    const tipCommand = getTipCommandInfo(context.payload.comment);
 
-  const commandInfo = getTipCommandInfo(context.payload.comment);
+    if (!tipCommand) {
+      console.log('invalid tip command.');
+      const params = context.issue({ body: 'Invalid tip command.' });
+      await context.github.issues.createComment(params);
 
-  if (!commandInfo) {
-    console.log('invalid tip command.');
-    const params = context.issue({ body: 'Invalid tip command' })
-    await context.github.issues.createComment(params);
+      return;
+    }
 
-    return;
-  }
+    console.log(`process tip command: ${JSON.stringify(tipCommand)}`);
 
-  console.log(`proccess tip command: ${JSON.stringify(commandInfo)}`);
+    const [resultMessage, error] = await proccessTipCommand(tipCommand);
 
-  // Post a comment on the issue
-  // await context.github.issues.createComment(params)
+    if (!resultMessage) {
+      console.log((error as AppError).message);
+      const params = context.issue({ body: (error as AppError).message });
+      // const params = context.issue({ body: 'An error occured, please try again later.' });
+      await context.github.issues.createComment(params);
+    } else {
+      const params = context.issue({ body: resultMessage });
+      await context.github.issues.createComment(params);
+    }
   });
+}
+
+async function proccessTipCommand(
+  tipCommand: TipCommandInfo
+): Promise<[string | undefined, undefined | AppError]> {
+  if (tipCommand.recipientNames.length < 1) {
+    return [`no tip recipients specified.`, undefined];
+  }
+
+  const snapshot = await admin.firestore().collection(`users`)
+                    .where('githubId', '==', tipCommand.senderGithubId)
+                    .get();
+
+  if (snapshot.size !== 1) {
+    return [`@${tipCommand.senderUsername} you don't have a tips account set up yet!`, undefined];
+  }
+
+  const sendingUser = snapshot.docs[0].data() as AppUser;
+
+  if (!sendingUser.githubId) {
+    return [`@${tipCommand.senderUsername} you don't have a tips account set up yet!`, undefined];
+  }
+
+  const recipientUsername = tipCommand.recipientNames[0];
+  const [recipientGithubId, userError] = await getGithubIdByUsername(recipientUsername);
+
+  if (!recipientGithubId) {
+    console.log((userError as AppError).message);
+    return [`Unable to find github ID for username: ${recipientUsername}`, undefined];
+  }
+
+  const [senderAccount, senderAccError] = await getTurtleAccount(tipCommand.senderGithubId, false);
+
+  if (!senderAccount) {
+    console.log((senderAccError as AppError).message);
+    return [undefined, senderAccError];
+  }
+
+  const [recipientAccount, recipientAccError] = await getTurtleAccount(recipientGithubId, true);
+
+  if (!recipientAccount) {
+    console.log((recipientAccError as AppError).message);
+    return [undefined, recipientAccError];
+  }
+
+  const [transfer, transferError] = await TrtlApp.transfer(senderAccount.id, recipientAccount.id, tipCommand.amount);
+
+  if (!transfer) {
+    return [undefined, new AppError('app/tip-error', (transferError as ServiceError).message)];
+  }
+
+  // TODO: check if the receiving account already as an App account or not.
+
+  return [`${tipCommand.amount / 100} TRTL successfully sent to @${recipientUsername}!`, undefined];
+}
+
+async function getGithubIdByUsername(username: string): Promise<[number | undefined, undefined | AppError]> {
+  try {
+    const response = await octokit.users.getByUsername({
+      username: username
+    });
+
+    return [response.data.id, undefined];
+  } catch (error) {
+    console.log(error);
+    return [undefined, new AppError('github/user-not-found', error)];
+  }
+}
+
+async function getTurtleAccount(
+  githubId: number,
+  autoCreate: boolean = false
+): Promise<[Account | undefined, undefined | AppError]> {
+  const accountDoc = await admin.firestore().doc(`accounts/${githubId}`).get();
+
+  if (accountDoc.exists) {
+    return [accountDoc.data() as Account, undefined];
+  }
+
+  if (autoCreate) {
+    return await createTurtleAccount(githubId);
+  } else {
+    return [undefined, new AppError('app/user-no-account')];
+  }
+}
+
+async function createTurtleAccount(githubId: number): Promise<[Account | undefined, undefined | AppError]> {
+  const [account, accError] = await TrtlApp.createAccount();
+
+  if (!account) {
+    return [undefined, new AppError('app/create-account', accError?.message)];
+  }
+
+  try {
+    await admin.firestore().doc(`accounts/${githubId}`).create(account);
+    return [account, undefined];
+  } catch (error) {
+    return [undefined, new AppError('app/create-account')];
+  }
 }
 
 function getTipCommandInfo(comment: Webhooks.WebhookPayloadIssueCommentComment): TipCommandInfo | undefined {
@@ -54,6 +166,7 @@ function getTipCommandInfo(comment: Webhooks.WebhookPayloadIssueCommentComment):
   }
 
   const tipInfo: TipCommandInfo = {
+    senderUsername: comment.user.login,
     senderGithubId: comment.user.id,
     amount: amount,
     recipientNames: mentions
@@ -76,7 +189,8 @@ function getTipAmount(text: string): number | undefined {
     return undefined;
   }
 
-  return amount;
+  // convert to atomic units
+  return amount * 100;
 }
 
 function getMentions(text: string): string[] {

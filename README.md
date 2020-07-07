@@ -11,6 +11,10 @@ A TurtleCoin tipbot for Github built with [Probot](https://github.com/probot/pro
 firebase functions:config:set probot.app_id="YOUR GITHUB APP ID"
 firebase functions:config:set probot.webhook_secret="YOUR WEBHOOK SECRET"
 firebase functions:config:set probot.private_key="YOUR PRIVATE KEY"
+
+# Set the following TRTL Apps variables:
+firebase functions:config:set trtl.app_id="YOUR TRTL APP ID"
+firebase functions:config:set trtl.app_secret="YOUR TRTL APP SECRET"
 ```
 
 ```sh

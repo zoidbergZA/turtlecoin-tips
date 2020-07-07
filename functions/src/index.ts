@@ -1,10 +1,12 @@
 import * as functions from 'firebase-functions';
 import { initializeApp } from 'firebase-admin';
 import { Request, Response } from 'express';
+import { TrtlApp } from 'trtl-apps';
 import { createProbot, Options } from 'probot'
 import * as SendTipCommand from './commands/sendTip';
 
-const probotEnv = functions.config().probot;
+const probotConfig = functions.config().probot;
+const turtleConfig = functions.config().trtl;
 
 // // Check if we are in Firebase or in development
 // if(!probotConfig) {
@@ -15,14 +17,17 @@ const probotEnv = functions.config().probot;
 // Init Firebase
 initializeApp();
 
-const probotConfig: Options = {
-  id: probotEnv.app_id,
-  secret: probotEnv.webhook_secret,
-  cert: probotEnv.private_key.replace(/\\n/g, '\n'),
+// Init TRTL App
+TrtlApp.initialize(turtleConfig.app_id, turtleConfig.app_secret);
+
+const probotOptions: Options = {
+  id: probotConfig.app_id,
+  secret: probotConfig.webhook_secret,
+  cert: probotConfig.private_key.replace(/\\n/g, '\n'),
 }
 
 // Create the bot using Firebase's probot config (see Readme.md)
-const bot = createProbot(probotConfig);
+const bot = createProbot(probotOptions);
 
 // // disable probot logging
 // bot.logger.streams.splice(0, 1);

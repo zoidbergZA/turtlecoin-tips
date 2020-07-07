@@ -14,12 +14,14 @@
   },
   "main": "lib/index.js",
   "dependencies": {
+    "@octokit/rest": "^18.0.0",
     "@octokit/webhooks": "^7.6.4",
     "@types/lru-cache": "^5.1.0",
     "express": "^4.17.1",
     "firebase-admin": "^8.13.0",
     "firebase-functions": "^3.6.1",
-    "probot": "^9.11.5"
+    "probot": "^9.11.5",
+    "trtl-apps": "^0.10.0"
   },
   "devDependencies": {
     "tslint": "^5.12.0",

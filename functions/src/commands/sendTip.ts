@@ -18,9 +18,9 @@ export function initListeners(bot: Application) {
     }
 
     const senderId = context.payload.sender.id;
-    const sendedLogin = context.payload.sender.login;
+    const senderLogin = context.payload.sender.login;
 
-    console.log(`comment created by: ${sendedLogin}, id: ${senderId}`);
+    console.log(`comment created by: ${senderLogin}, id: ${senderId}`);
 
     const tipInfo = getTipCommandInfo(context.payload.comment);
 

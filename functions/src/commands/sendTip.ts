@@ -53,18 +53,14 @@ async function proccessTipCommand(
     return `no tip recipients specified.`;
   }
 
-  const snapshot = await admin.firestore().collection(`users`)
-                    .where('githubId', '==', tipCommand.senderGithubId)
-                    .get();
+  const [sendingUser] = await getAppUserByGithubId(tipCommand.senderGithubId);
 
-  if (snapshot.size !== 1) {
-    return `@${tipCommand.senderUsername} you don't have a tips account set up yet!`;
+  if (!sendingUser) {
+    return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit [comming soon] to get started.`;
   }
 
-  const sendingUser = snapshot.docs[0].data() as AppUser;
-
   if (!sendingUser.githubId) {
-    return `@${tipCommand.senderUsername} you don't have a tips account set up yet!`;
+    return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit [comming soon] to get started.`;
   }
 
   const recipientUsername = tipCommand.recipientNames[0];
@@ -95,9 +91,7 @@ async function proccessTipCommand(
     return (transferError as ServiceError).message;
   }
 
-  // TODO: check if the receiving account already as an App account or not.
-
-  return `${tipCommand.amount / 100} TRTL successfully sent to @${recipientUsername}!`;
+  return `\`${(tipCommand.amount / 100).toFixed(2)} TRTL\` successfully sent to @${recipientUsername}! Visit [comming soon] to manage your tips.`;
 }
 
 async function getGithubIdByUsername(username: string): Promise<[number | undefined, undefined | AppError]> {
@@ -111,6 +105,18 @@ async function getGithubIdByUsername(username: string): Promise<[number | undefi
     console.log(error);
     return [undefined, new AppError('github/user-not-found', error)];
   }
+}
+
+async function getAppUserByGithubId(githubId: number): Promise<[AppUser | undefined, undefined | AppError]> {
+  const snapshot = await admin.firestore().collection(`users`)
+                    .where('githubId', '==', githubId)
+                    .get();
+
+  if (snapshot.size !== 1) {
+    return [undefined, new AppError('app/user-no-account')];
+}
+
+  return [snapshot.docs[0].data() as AppUser, undefined];
 }
 
 async function getTurtleAccount(

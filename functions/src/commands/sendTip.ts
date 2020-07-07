@@ -1,12 +1,9 @@
-import * as admin from 'firebase-admin';
-import { TrtlApp, Account, ServiceError } from 'trtl-apps';
+import { TrtlApp, ServiceError } from 'trtl-apps';
 import { Application } from 'probot'
 import Webhooks from '@octokit/webhooks';
-import { AppUser, TipCommandInfo } from '../types';
+import { TipCommandInfo } from '../types';
 import { AppError } from '../appError';
-import { Octokit } from '@octokit/rest';
-
-const octokit = new Octokit({});
+import { getGithubIdByUsername, getAppUserByGithubId, getTurtleAccount } from '../backend';
 
 export function initListeners(bot: Application) {
   bot.on('issue_comment.created', async context => {
@@ -14,7 +11,6 @@ export function initListeners(bot: Application) {
       return;
     }
 
-    // check for tip command in comment body
     const commentText = context.payload.comment.body
 
     if (!commentText.startsWith('.tip ')) {
@@ -23,9 +19,8 @@ export function initListeners(bot: Application) {
 
     const senderId = context.payload.sender.id;
     const sendedLogin = context.payload.sender.login;
-    const senderUrl = context.payload.sender.url;
 
-    console.log(`comment created by: ${sendedLogin}, id: ${senderId}, sender url: ${senderUrl}`);
+    console.log(`comment created by: ${sendedLogin}, id: ${senderId}`);
 
     const tipInfo = getTipCommandInfo(context.payload.comment);
 
@@ -46,9 +41,7 @@ export function initListeners(bot: Application) {
   });
 }
 
-async function proccessTipCommand(
-  tipCommand: TipCommandInfo
-): Promise<string> {
+async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
   if (tipCommand.recipientNames.length < 1) {
     return `no tip recipients specified.`;
   }
@@ -75,7 +68,7 @@ async function proccessTipCommand(
 
   if (!senderAccount) {
     console.log((senderAccError as AppError).message);
-    return `@${tipCommand.senderUsername} you don't have a tips account set up yet!`;
+    return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit [comming soon] to get started.`;
   }
 
   const [recipientAccount, recipientAccError] = await getTurtleAccount(recipientGithubId, true);
@@ -91,64 +84,9 @@ async function proccessTipCommand(
     return (transferError as ServiceError).message;
   }
 
+  // TODO: if recipient doesn't have an app user account yet, respond with an appropriate message.
+
   return `\`${(tipCommand.amount / 100).toFixed(2)} TRTL\` successfully sent to @${recipientUsername}! Visit [comming soon] to manage your tips.`;
-}
-
-async function getGithubIdByUsername(username: string): Promise<[number | undefined, undefined | AppError]> {
-  try {
-    const response = await octokit.users.getByUsername({
-      username: username
-    });
-
-    return [response.data.id, undefined];
-  } catch (error) {
-    console.log(error);
-    return [undefined, new AppError('github/user-not-found', error)];
-  }
-}
-
-async function getAppUserByGithubId(githubId: number): Promise<[AppUser | undefined, undefined | AppError]> {
-  const snapshot = await admin.firestore().collection(`users`)
-                    .where('githubId', '==', githubId)
-                    .get();
-
-  if (snapshot.size !== 1) {
-    return [undefined, new AppError('app/user-no-account')];
-}
-
-  return [snapshot.docs[0].data() as AppUser, undefined];
-}
-
-async function getTurtleAccount(
-  githubId: number,
-  autoCreate: boolean = false
-): Promise<[Account | undefined, undefined | AppError]> {
-  const accountDoc = await admin.firestore().doc(`accounts/${githubId}`).get();
-
-  if (accountDoc.exists) {
-    return [accountDoc.data() as Account, undefined];
-  }
-
-  if (autoCreate) {
-    return await createTurtleAccount(githubId);
-  } else {
-    return [undefined, new AppError('app/user-no-account')];
-  }
-}
-
-async function createTurtleAccount(githubId: number): Promise<[Account | undefined, undefined | AppError]> {
-  const [account, accError] = await TrtlApp.createAccount();
-
-  if (!account) {
-    return [undefined, new AppError('app/create-account', accError?.message)];
-  }
-
-  try {
-    await admin.firestore().doc(`accounts/${githubId}`).create(account);
-    return [account, undefined];
-  } catch (error) {
-    return [undefined, new AppError('app/create-account')];
-  }
 }
 
 function getTipCommandInfo(comment: Webhooks.WebhookPayloadIssueCommentComment): TipCommandInfo | undefined {
@@ -167,8 +105,8 @@ function getTipCommandInfo(comment: Webhooks.WebhookPayloadIssueCommentComment):
   const tipInfo: TipCommandInfo = {
     senderUsername: comment.user.login,
     senderGithubId: comment.user.id,
-    amount: amount,
-    recipientNames: mentions
+    recipientNames: mentions,
+    amount:         amount
   };
 
   return tipInfo;

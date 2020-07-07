@@ -1,6 +1,7 @@
 export interface AppUser {
   uid: string;
   githubId?: number;
+  username?: string;
 }
 
 export interface TipCommandInfo {

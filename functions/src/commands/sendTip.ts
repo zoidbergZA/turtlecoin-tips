@@ -27,9 +27,9 @@ export function initListeners(bot: Application) {
 
     console.log(`comment created by: ${sendedLogin}, id: ${senderId}, sender url: ${senderUrl}`);
 
-    const tipCommand = getTipCommandInfo(context.payload.comment);
+    const tipInfo = getTipCommandInfo(context.payload.comment);
 
-    if (!tipCommand) {
+    if (!tipInfo) {
       console.log('invalid tip command.');
       const params = context.issue({ body: 'Invalid tip command.' });
       await context.github.issues.createComment(params);
@@ -37,27 +37,20 @@ export function initListeners(bot: Application) {
       return;
     }
 
-    console.log(`process tip command: ${JSON.stringify(tipCommand)}`);
+    console.log(`process tip command: ${JSON.stringify(tipInfo)}`);
 
-    const [resultMessage, error] = await proccessTipCommand(tipCommand);
+    const resultMessage = await proccessTipCommand(tipInfo);
+    const resultParams = context.issue({ body: resultMessage });
 
-    if (!resultMessage) {
-      console.log((error as AppError).message);
-      const params = context.issue({ body: (error as AppError).message });
-      // const params = context.issue({ body: 'An error occured, please try again later.' });
-      await context.github.issues.createComment(params);
-    } else {
-      const params = context.issue({ body: resultMessage });
-      await context.github.issues.createComment(params);
-    }
+    await context.github.issues.createComment(resultParams);
   });
 }
 
 async function proccessTipCommand(
   tipCommand: TipCommandInfo
-): Promise<[string | undefined, undefined | AppError]> {
+): Promise<string> {
   if (tipCommand.recipientNames.length < 1) {
-    return [`no tip recipients specified.`, undefined];
+    return `no tip recipients specified.`;
   }
 
   const snapshot = await admin.firestore().collection(`users`)
@@ -65,13 +58,13 @@ async function proccessTipCommand(
                     .get();
 
   if (snapshot.size !== 1) {
-    return [`@${tipCommand.senderUsername} you don't have a tips account set up yet!`, undefined];
+    return `@${tipCommand.senderUsername} you don't have a tips account set up yet!`;
   }
 
   const sendingUser = snapshot.docs[0].data() as AppUser;
 
   if (!sendingUser.githubId) {
-    return [`@${tipCommand.senderUsername} you don't have a tips account set up yet!`, undefined];
+    return `@${tipCommand.senderUsername} you don't have a tips account set up yet!`;
   }
 
   const recipientUsername = tipCommand.recipientNames[0];
@@ -79,32 +72,32 @@ async function proccessTipCommand(
 
   if (!recipientGithubId) {
     console.log((userError as AppError).message);
-    return [`Unable to find github ID for username: ${recipientUsername}`, undefined];
+    return `Unable to find github user: ${recipientUsername}`;
   }
 
   const [senderAccount, senderAccError] = await getTurtleAccount(tipCommand.senderGithubId, false);
 
   if (!senderAccount) {
     console.log((senderAccError as AppError).message);
-    return [undefined, senderAccError];
+    return `@${tipCommand.senderUsername} you don't have a tips account set up yet!`;
   }
 
   const [recipientAccount, recipientAccError] = await getTurtleAccount(recipientGithubId, true);
 
   if (!recipientAccount) {
     console.log((recipientAccError as AppError).message);
-    return [undefined, recipientAccError];
+    return `Failed to get tips account for user ${recipientUsername}.`;
   }
 
   const [transfer, transferError] = await TrtlApp.transfer(senderAccount.id, recipientAccount.id, tipCommand.amount);
 
   if (!transfer) {
-    return [undefined, new AppError('app/tip-error', (transferError as ServiceError).message)];
+    return (transferError as ServiceError).message;
   }
 
   // TODO: check if the receiving account already as an App account or not.
 
-  return [`${tipCommand.amount / 100} TRTL successfully sent to @${recipientUsername}!`, undefined];
+  return `${tipCommand.amount / 100} TRTL successfully sent to @${recipientUsername}!`;
 }
 
 async function getGithubIdByUsername(username: string): Promise<[number | undefined, undefined | AppError]> {

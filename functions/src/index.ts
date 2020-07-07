@@ -8,12 +8,6 @@ import * as SendTipCommand from './commands/sendTip';
 const probotConfig = functions.config().probot;
 const turtleConfig = functions.config().trtl;
 
-// // Check if we are in Firebase or in development
-// if(!probotConfig) {
-//   // Use dev config
-//   probotConfig = require('../private/env.json');
-// }
-
 // Init Firebase
 initializeApp();
 
@@ -21,27 +15,14 @@ initializeApp();
 TrtlApp.initialize(turtleConfig.app_id, turtleConfig.app_secret);
 
 const probotOptions: Options = {
-  id: probotConfig.app_id,
+  id:     probotConfig.app_id,
   secret: probotConfig.webhook_secret,
-  cert: probotConfig.private_key.replace(/\\n/g, '\n'),
+  cert:   probotConfig.private_key.replace(/\\n/g, '\n'),
 }
 
-// Create the bot using Firebase's probot config (see Readme.md)
 const bot = createProbot(probotOptions);
 
-// // disable probot logging
-// bot.logger.streams.splice(0, 1);
-// // Use node console as the output stream
-// bot.logger.addStream(consoleStream(store));
-// // Load the merge task to monitor PRs
 bot.load(robot => {
-  robot.on('issues.opened', async context => {
-    const params = context.issue({ body: 'Hello World!' })
-
-    // Post a comment on the issue
-    await context.github.issues.createComment(params)
-  });
-
   SendTipCommand.initListeners(robot);
 });
 
@@ -51,9 +32,6 @@ bot.load(robot => {
 exports.bot = functions.https.onRequest(async (request: Request, response: Response) => {
   const name = request.get('x-github-event') || request.get('X-GitHub-Event');
   const id = request.get('x-github-delivery') || request.get('X-GitHub-Delivery');
-
-  // console.log(`name: ${name}, id: ${id}`);
-  // response.status(200).send('OK');
 
   if(name && id) {
     try {

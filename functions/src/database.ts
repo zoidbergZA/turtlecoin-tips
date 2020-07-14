@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import { TrtlApp, Account, ServiceError, Transfer, WithdrawalPreview } from 'trtl-apps';
 import { AppError } from './appError';
 import { Octokit } from '@octokit/rest';
-import { AppUser, AppConfig, UnclaimedTip } from './types';
+import { AppUser, AppConfig, UnclaimedTip, GithubUser } from './types';
 
 const octokit = new Octokit({});
 
@@ -42,8 +42,39 @@ export async function getAppUserByGithubId(githubId: number): Promise<[AppUser |
   return [snapshot.docs[0].data() as AppUser, undefined];
 }
 
-export async function getTurtleAccount(githubId: number): Promise<[Account | undefined, undefined | AppError]> {
-  const accountDoc = await admin.firestore().doc(`accounts/${githubId}`).get();
+export async function getGithubUser(githubId: number): Promise<[GithubUser | undefined, undefined | AppError]> {
+  const snapshot = await admin.firestore().doc(`github_users/${githubId}`).get();
+
+  if (snapshot.exists) {
+    return [snapshot.data() as GithubUser, undefined];
+  } else {
+    return [undefined, new AppError('github/user-not-found')];
+  }
+}
+
+/**
+ * Retrieves a turtle account by account ID or github ID.
+ *
+ * @param id if a string is provided, fetches account by account ID, else by github ID (number).
+ */
+export async function getTurtleAccount(id: number | string): Promise<[Account | undefined, undefined | AppError]> {
+  let accountId: string | undefined;
+
+  if (typeof(id) === 'number') {
+    const [githubUser, userError] = await getGithubUser(id);
+
+    if (!githubUser) {
+      return [undefined, userError];
+    }
+
+    accountId = githubUser.accountId;
+  }
+
+  if (typeof(id) === 'string') {
+    accountId = id;
+  }
+
+  const accountDoc = await admin.firestore().doc(`accounts/${accountId}`).get();
 
   if (accountDoc.exists) {
     return [accountDoc.data() as Account, undefined];
@@ -52,7 +83,7 @@ export async function getTurtleAccount(githubId: number): Promise<[Account | und
   }
 }
 
-export async function createTurtleAccount(githubId: number): Promise<[Account | undefined, undefined | AppError]> {
+export async function createGithubUser(githubId: number): Promise<[GithubUser | undefined, undefined | AppError]> {
   const [account, accError] = await TrtlApp.createAccount();
 
   if (!account) {
@@ -60,10 +91,21 @@ export async function createTurtleAccount(githubId: number): Promise<[Account | 
   }
 
   try {
-    await admin.firestore().doc(`accounts/${githubId}`).create(account);
-    return [account, undefined];
+    const githubUser: GithubUser = {
+      githubId: githubId,
+      accountId: account.id
+    }
+
+    const batch = admin.firestore().batch();
+
+    batch.create(admin.firestore().doc(`accounts/${account.id}`), account);
+    batch.create(admin.firestore().doc(`github_users/${githubId}`), githubUser);
+
+    await batch.commit();
+
+    return [githubUser, undefined];
   } catch (error) {
-    return [undefined, new AppError('app/create-account')];
+    return [undefined, new AppError('app/create-account', `error creating GithubUser for id: ${githubId}`)];
   }
 }
 
@@ -120,19 +162,14 @@ export async function createUnclaimedTipDoc(
 }
 
 export async function getExpiredTips(githubId?: number): Promise<UnclaimedTip[]> {
-  let snapshot: FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData>;
+  const query = admin.firestore().collection('unclaimed_tips')
+                  .where('timeoutDate', '<', Date.now());
 
   if (githubId) {
-    snapshot = await admin.firestore().collection('unclaimed_tips')
-                .where('timeoutDate', '<', Date.now())
-                .where('recipientGithubId', '==', githubId)
-                .get();
-  } else {
-    snapshot = await admin.firestore().collection('unclaimed_tips')
-                .where('timeoutDate', '<', Date.now())
-                .get();
+    query.where('recipientGithubId', '==', githubId);
   }
 
+  const snapshot = await query.get();
   return snapshot.docs.map(d => d.data() as UnclaimedTip);
 }
 

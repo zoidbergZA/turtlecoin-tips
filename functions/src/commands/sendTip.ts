@@ -1,8 +1,9 @@
+import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import { TrtlApp, ServiceError } from 'trtl-apps';
 import { Application } from 'probot'
 import Webhooks from '@octokit/webhooks';
-import { TipCommandInfo } from '../types';
+import { TipCommandInfo, Transaction } from '../types';
 import { AppError } from '../appError';
 import * as db from '../database';
 
@@ -45,10 +46,6 @@ export function initListeners(bot: Application) {
 }
 
 async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
-  if (tipCommand.recipientNames.length < 1) {
-    return `no tip recipients specified.`;
-  }
-
   const [sendingUser] = await db.getAppUserByGithubId(tipCommand.senderGithubId);
 
   if (!sendingUser) {
@@ -59,12 +56,11 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
     return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit ${frontendUrl} to get started.`;
   }
 
-  const recipientUsername = tipCommand.recipientNames[0];
-  const [recipientGithubId, userError] = await db.getGithubIdByUsername(recipientUsername);
+  const [recipientGithubId, userError] = await db.getGithubIdByUsername(tipCommand.recipientUsername);
 
   if (!recipientGithubId) {
     console.log((userError as AppError).message);
-    return `Unable to find github user: ${recipientUsername}`;
+    return `Unable to find github user: ${tipCommand.recipientUsername}`;
   }
 
   const [senderAccount, senderAccError] = await db.getTurtleAccount(tipCommand.senderGithubId);
@@ -81,31 +77,75 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
     return 'An error occurred, please try again later.';
   }
 
-  let [recipientAccount, recipientAccError] = await db.getTurtleAccount(recipientGithubId);
+  const [recipientAccount, recipientAccError] = await db.getTurtleAccount(recipientGithubId);
   let isUnclaimed = false;
+  let recipientAccountId: string | undefined;
 
   if (!recipientAccount) {
     isUnclaimed = true;
-    [recipientAccount, recipientAccError] = await db.createTurtleAccount(recipientGithubId);
+    const [recipientGithubUser, createError] = await db.createGithubUser(recipientGithubId);
+
+    if (recipientGithubUser) {
+      recipientAccountId = recipientGithubUser.accountId;
+    } else {
+      console.log((createError as AppError).message);
+    }
+  } else {
+    recipientAccountId = recipientAccount.id;
   }
 
-  if (!recipientAccount) {
+  if (!recipientAccountId) {
     console.log((recipientAccError as AppError).message);
-    return `Failed to get tips account for user ${recipientUsername}.`;
+    return `Failed to get tips account for user ${tipCommand.recipientUsername}.`;
   }
 
-  const [transfer, transferError] = await TrtlApp.transfer(senderAccount.id, recipientAccount.id, tipCommand.amount);
+  const [transfer, transferError] = await TrtlApp.transfer(senderAccount.id, recipientAccountId, tipCommand.amount);
 
   if (!transfer) {
     return (transferError as ServiceError).message;
   }
 
+  const senderTxRef = admin.firestore().collection(`accounts/${senderAccount.id}/transactions`).doc();
+  const recipientTxRef = admin.firestore().collection(`accounts/${recipientAccountId}/transactions`).doc();
+
+  const senderTx: Transaction = {
+    id:                 senderTxRef.id,
+    userId:             sendingUser.uid,
+    accountId:          senderAccount.id,
+    githubId:           sendingUser.githubId,
+    timestamp:          transfer.timestamp,
+    transferType:       'tip',
+    amount:             tipCommand.amount,
+    fee:                0,
+    status:             'completed',
+    accountTransferId:  transfer.id,
+    senderUsername:     tipCommand.senderUsername,
+    recipientUsername:  tipCommand.recipientUsername
+  }
+
+  const recipientTx: Transaction = {
+    id:                 recipientTxRef.id,
+    userId:             sendingUser.uid,
+    accountId:          senderAccount.id,
+    githubId:           sendingUser.githubId,
+    timestamp:          transfer.timestamp,
+    transferType:       'tip',
+    amount:             tipCommand.amount,
+    fee:                0,
+    status:             'completed',
+    accountTransferId:  transfer.id,
+    senderUsername:     tipCommand.senderUsername,
+    recipientUsername:  tipCommand.recipientUsername
+  }
+
   await Promise.all([
+    senderTxRef.set(senderTx),
+    recipientTxRef.set(recipientTx),
     db.refreshAccount(senderAccount.id),
-    db.refreshAccount(recipientAccount.id)
+    db.refreshAccount(recipientAccountId)
   ]);
 
-  let response = `\`${(tipCommand.amount / 100).toFixed(2)} TRTL\` successfully sent to @${recipientUsername}! Visit ${frontendUrl} to manage your tips.`;
+  let response = `\`${(tipCommand.amount / 100).toFixed(2)} TRTL\` successfully sent to @${tipCommand.recipientUsername}! Visit ${frontendUrl} to manage your tips.`;
 
   if (isUnclaimed && appConfig.tipTimeoutDays > 0) {
     const [unclaimedTip, tipError] = await db.createUnclaimedTipDoc(transfer, appConfig.tipTimeoutDays, recipientGithubId);
@@ -113,7 +153,7 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
     if (!unclaimedTip) {
       console.log((tipError as AppError).message);
     } else {
-      response += `\n\n @${recipientUsername} you have not linked a tips account yet, visit ${frontendUrl} to activate your tips account. You have ${unclaimedTip.timeoutDays} days to claim your tip before @${sendingUser} is refunded!`;
+      response += `\n\n @${tipCommand.recipientUsername} you have not linked a tips account yet, visit ${frontendUrl} to activate your tips account. You have ${unclaimedTip.timeoutDays} days to claim your tip before @${sendingUser} is refunded!`;
     }
   }
 
@@ -136,8 +176,8 @@ function getTipCommandInfo(comment: Webhooks.WebhookPayloadIssueCommentComment):
   const tipInfo: TipCommandInfo = {
     senderUsername: comment.user.login,
     senderGithubId: comment.user.id,
-    recipientNames: mentions,
-    amount:         amount
+    recipientUsername: mentions[0],
+    amount: amount
   };
 
   return tipInfo;

@@ -6,9 +6,9 @@ import * as SendTipCommand from './commands/sendTip';
 import { Request, Response } from 'express';
 import { TrtlApp, ServiceError, WithdrawalPreview, Withdrawal } from 'trtl-apps';
 import { createProbot, Options } from 'probot'
-import { UnclaimedTip, AppUser } from './types';
-import groupBy from 'lodash.groupby';
+import { UnclaimedTip, AppUser, Transaction } from './types';
 import { AppError } from './appError';
+import groupBy from 'lodash.groupby';
 
 const probotConfig = functions.config().probot;
 const turtleConfig = functions.config().trtl;
@@ -74,25 +74,30 @@ exports.onNewAuthUserCreated = functions.auth.user().onCreate(async (user) => {
 
   // TODO: get githubId from providers or API call
 
-  await admin.firestore().doc(`users/${appUser.uid}`).set(appUser);
-
   if (appUser.githubId) {
-    let [account, accountError] = await db.getTurtleAccount(appUser.githubId);
+    const [account] = await db.getTurtleAccount(appUser.githubId);
 
     if (account) {
+      appUser.accountId = account.id;
+
+      // if the new user already has a tips account, cancel all unclaimed tips.
       const tips = await db.getExpiredTips(appUser.githubId);
 
       if (tips.length > 0) {
         await db.deleteUnclaimedTips(tips.map(t => t.id));
       }
     } else {
-      [account, accountError] = await db.createTurtleAccount(appUser.githubId);
+      const [githubUser, userError] = await db.createGithubUser(appUser.githubId);
 
-      if (!account) {
-        console.log(`error creating account for app user [${appUser.uid}]: ${(accountError as AppError).message}`);
+      if (githubUser) {
+        appUser.accountId = githubUser.accountId;
+      } else {
+        console.log(`error creating account for app user [${appUser.uid}]: ${(userError as AppError).message}`);
       }
     }
   }
+
+  await admin.firestore().doc(`users/${appUser.uid}`).set(appUser);
 });
 
 export const userPrepareWithdrawal = functions.https.onCall(async (data, context) => {
@@ -129,13 +134,24 @@ export const userWithdraw = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('invalid-argument', 'Invalid prepared withdrawal ID.');
   }
 
+  const [appUser, userError] = await db.getAppUserByUid(userId);
+
+  if (!appUser) {
+    console.log((userError as AppError).message);
+    throw new functions.https.HttpsError('not-found', (userError as AppError).message);
+  }
+
+  if (!appUser.githubId) {
+    throw new functions.https.HttpsError('not-found', 'user github ID not found.');
+  }
+
   const preparedWithdrawal = await db.getPreparedWithdrawal(userId, preparedWithdrawalId);
 
   if (!preparedWithdrawal) {
     throw new functions.https.HttpsError('not-found', 'Prepared withdrawal not found.');
   }
 
-  const [withdrawal, error] = await sendPreparedWithdrawal(preparedWithdrawal);
+  const [withdrawal, error] = await sendPreparedWithdrawal(userId, appUser.githubId, preparedWithdrawal);
 
   if (withdrawal) {
     return withdrawal;
@@ -144,7 +160,7 @@ export const userWithdraw = functions.https.onCall(async (data, context) => {
   }
 });
 
-exports.turtleWebhook = functions.https.onRequest(async (request: functions.https.Request, response: Response) => {
+exports.turtleWebhook = functions.https.onRequest(async (request: functions.https.Request, response: functions.Response) => {
   if (!validateWebhookCall(request)) {
     response.status(403).send('Unauthorized.');
     return;
@@ -154,10 +170,12 @@ exports.turtleWebhook = functions.https.onRequest(async (request: functions.http
 
   if (eventCode.startsWith('deposit') || eventCode.startsWith('withdrawal')) {
     const accountId: string = request.body.data.accountId;
-
     await db.refreshAccount(accountId);
-    response.status(200).send('OK');
   }
+
+  // TODO: create/update transaction object
+
+  response.status(200).send('OK');
 });
 
 exports.refundUnclaimedTips = functions.pubsub.schedule('every 6 hours').onRun(async (context) => {
@@ -181,9 +199,38 @@ exports.refundUnclaimedTips = functions.pubsub.schedule('every 6 hours').onRun(a
 });
 
 async function sendPreparedWithdrawal(
+  userId: string,
+  githubId: number,
   preparedWithdrawal: WithdrawalPreview
 ): Promise<[Withdrawal | undefined, undefined | ServiceError]> {
-  return TrtlApp.withdraw(preparedWithdrawal.id);
+  const [withdrawal, error] = await TrtlApp.withdraw(preparedWithdrawal.id);
+
+  if (!withdrawal) {
+    return [undefined, error];
+  }
+
+  const docRef = admin.firestore().collection(`accounts/${preparedWithdrawal.accountId}/transactions`).doc();
+  const fee = withdrawal.fees.nodeFee + withdrawal.fees.serviceFee + withdrawal.fees.txFee;
+
+  const transaction: Transaction = {
+    id:             docRef.id,
+    userId:         userId,
+    accountId:      withdrawal.accountId,
+    githubId:       githubId,
+    timestamp:      withdrawal.timestamp,
+    transferType:   'withdrawal',
+    amount:         withdrawal.amount,
+    fee:            fee,
+    status:         'confirming',
+    sendAddress:    withdrawal.address,
+    withdrawalId:   withdrawal.id,
+    txHash:         withdrawal.txHash,
+    paymentID:      withdrawal.paymentId
+  }
+
+  await docRef.set(transaction);
+
+  return [withdrawal, undefined];
 }
 
 async function refundAccountUnclaimedTips(githubId: number, tips: UnclaimedTip[]): Promise<void> {
@@ -211,6 +258,10 @@ async function refundUnclaimedTip(tip: UnclaimedTip): Promise<boolean> {
         throw (transferError as ServiceError).message;
       }
     });
+
+    // TODO: create 'tipRefund' transaction doc in original sender's history
+
+    // TODO: delete transaction doc from the original recipient's history
 
     await Promise.all([
       db.refreshAccount(tip.senderId),

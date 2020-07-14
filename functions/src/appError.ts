@@ -3,6 +3,9 @@ export type AppErrorCode =  'app/unknown-error'           |
                             'app/user-no-account'         |
                             'app/create-account'          |
                             'app/tip-error'               |
+                            'app/unclaimed-tip'           |
+                            'app/config'                  |
+                            'app/withdraw-preview'        |
                             'github/user-not-found'
 
 
@@ -30,6 +33,12 @@ export class AppError {
         return 'An error occured creating app account.';
       case 'app/tip-error':
         return 'An error occured while sending tip.';
+      case 'app/unclaimed-tip':
+        return 'An error occured while creating unclaimed tip doc.';
+      case 'app/config':
+        return 'Unable to retrieve app config.';
+      case 'app/withdraw-preview':
+        return 'Failed to create withdrawal preview.';
       case 'github/user-not-found':
         return 'Failed to find github user.';
       default:

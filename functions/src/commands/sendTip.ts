@@ -1,9 +1,12 @@
+import * as functions from 'firebase-functions';
 import { TrtlApp, ServiceError } from 'trtl-apps';
 import { Application } from 'probot'
 import Webhooks from '@octokit/webhooks';
 import { TipCommandInfo } from '../types';
 import { AppError } from '../appError';
-import { getGithubIdByUsername, getAppUserByGithubId, getTurtleAccount } from '../backend';
+import * as db from '../database';
+
+const frontendUrl = functions.config().frontend.url;
 
 export function initListeners(bot: Application) {
   bot.on('issue_comment.created', async context => {
@@ -46,32 +49,45 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
     return `no tip recipients specified.`;
   }
 
-  const [sendingUser] = await getAppUserByGithubId(tipCommand.senderGithubId);
+  const [sendingUser] = await db.getAppUserByGithubId(tipCommand.senderGithubId);
 
   if (!sendingUser) {
-    return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit [comming soon] to get started.`;
+    return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit ${frontendUrl} to get started.`;
   }
 
   if (!sendingUser.githubId) {
-    return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit [comming soon] to get started.`;
+    return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit ${frontendUrl} to get started.`;
   }
 
   const recipientUsername = tipCommand.recipientNames[0];
-  const [recipientGithubId, userError] = await getGithubIdByUsername(recipientUsername);
+  const [recipientGithubId, userError] = await db.getGithubIdByUsername(recipientUsername);
 
   if (!recipientGithubId) {
     console.log((userError as AppError).message);
     return `Unable to find github user: ${recipientUsername}`;
   }
 
-  const [senderAccount, senderAccError] = await getTurtleAccount(tipCommand.senderGithubId, false);
+  const [senderAccount, senderAccError] = await db.getTurtleAccount(tipCommand.senderGithubId);
 
   if (!senderAccount) {
     console.log((senderAccError as AppError).message);
-    return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit [comming soon] to get started.`;
+    return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit ${frontendUrl} to get started.`;
   }
 
-  const [recipientAccount, recipientAccError] = await getTurtleAccount(recipientGithubId, true);
+  const [appConfig, configError] = await db.getAppConfig();
+
+  if (!appConfig) {
+    console.log((configError as AppError).message);
+    return 'An error occurred, please try again later.';
+  }
+
+  let [recipientAccount, recipientAccError] = await db.getTurtleAccount(recipientGithubId);
+  let isUnclaimed = false;
+
+  if (!recipientAccount) {
+    isUnclaimed = true;
+    [recipientAccount, recipientAccError] = await db.createTurtleAccount(recipientGithubId);
+  }
 
   if (!recipientAccount) {
     console.log((recipientAccError as AppError).message);
@@ -84,9 +100,24 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
     return (transferError as ServiceError).message;
   }
 
-  // TODO: if recipient doesn't have an app user account yet, respond with an appropriate message.
+  await Promise.all([
+    db.refreshAccount(senderAccount.id),
+    db.refreshAccount(recipientAccount.id)
+  ]);
 
-  return `\`${(tipCommand.amount / 100).toFixed(2)} TRTL\` successfully sent to @${recipientUsername}! Visit [comming soon] to manage your tips.`;
+  let response = `\`${(tipCommand.amount / 100).toFixed(2)} TRTL\` successfully sent to @${recipientUsername}! Visit ${frontendUrl} to manage your tips.`;
+
+  if (isUnclaimed && appConfig.tipTimeoutDays > 0) {
+    const [unclaimedTip, tipError] = await db.createUnclaimedTipDoc(transfer, appConfig.tipTimeoutDays, recipientGithubId);
+
+    if (!unclaimedTip) {
+      console.log((tipError as AppError).message);
+    } else {
+      response += `\n\n @${recipientUsername} you have not linked a tips account yet, visit ${frontendUrl} to activate your tips account. You have ${unclaimedTip.timeoutDays} days to claim your tip before @${sendingUser} is refunded!`;
+    }
+  }
+
+  return response;
 }
 
 function getTipCommandInfo(comment: Webhooks.WebhookPayloadIssueCommentComment): TipCommandInfo | undefined {

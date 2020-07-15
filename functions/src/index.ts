@@ -82,7 +82,7 @@ exports.onNewAuthUserCreated = functions.auth.user().onCreate(async (user) => {
       appUser.accountId = account.id;
 
       // if the new user already has a tips account, cancel all unclaimed tips.
-      const tips = await db.getExpiredTips(appUser.githubId);
+      const tips = await db.getUnclaimedTips(appUser.githubId);
 
       if (tips.length > 0) {
         await db.deleteUnclaimedTips(tips.map(t => t.id));
@@ -172,7 +172,7 @@ exports.turtleWebhook = functions.https.onRequest(async (request: functions.http
 });
 
 exports.refundUnclaimedTips = functions.pubsub.schedule('every 6 hours').onRun(async (context) => {
-  const expiredTips = await db.getExpiredTips();
+  const expiredTips = await db.getUnclaimedTips(undefined, true);
 
   if (expiredTips.length === 0) {
     return;

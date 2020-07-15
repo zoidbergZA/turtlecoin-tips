@@ -178,12 +178,15 @@ export async function createUnclaimedTipDoc(
   }
 }
 
-export async function getExpiredTips(githubId?: number): Promise<UnclaimedTip[]> {
-  const query = admin.firestore().collection('unclaimed_tips')
-                  .where('timeoutDate', '<', Date.now());
+export async function getUnclaimedTips(githubId?: number, expired: boolean = false): Promise<UnclaimedTip[]> {
+  const query = admin.firestore().collection('unclaimed_tips');
 
   if (githubId) {
     query.where('recipientGithubId', '==', githubId);
+  }
+
+  if (expired) {
+    query.where('timeoutDate', '<', Date.now());
   }
 
   const snapshot = await query.get();

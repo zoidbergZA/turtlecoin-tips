@@ -8,6 +8,7 @@ import { TrtlApp, ServiceError, WithdrawalPreview, Withdrawal } from 'trtl-apps'
 import { createProbot, Options } from 'probot'
 import { UnclaimedTip, AppUser, Transaction } from './types';
 import { AppError } from './appError';
+import { processWebhookCall } from './webhookModule';
 import groupBy from 'lodash.groupby';
 
 const probotConfig = functions.config().probot;
@@ -166,15 +167,7 @@ exports.turtleWebhook = functions.https.onRequest(async (request: functions.http
     return;
   }
 
-  const eventCode: string = request.body.code;
-
-  if (eventCode.startsWith('deposit') || eventCode.startsWith('withdrawal')) {
-    const accountId: string = request.body.data.accountId;
-    await db.refreshAccount(accountId);
-  }
-
-  // TODO: create/update transaction object
-
+  await processWebhookCall(request.body);
   response.status(200).send('OK');
 });
 
@@ -225,7 +218,7 @@ async function sendPreparedWithdrawal(
     sendAddress:    withdrawal.address,
     withdrawalId:   withdrawal.id,
     txHash:         withdrawal.txHash,
-    paymentID:      withdrawal.paymentId
+    paymentId:      withdrawal.paymentId
   }
 
   await docRef.set(transaction);

@@ -120,6 +120,19 @@ export async function refreshAccount(accountId: string): Promise<void> {
   await admin.firestore().doc(`accounts/${accountId}`).set(account);
 }
 
+export async function getAccountOwner(accountId: string): Promise<[AppUser | undefined, undefined | AppError]> {
+  const snapshot = await admin.firestore()
+                    .collection('users')
+                    .where('accountId', '==', accountId)
+                    .get();
+
+  if (snapshot.size !== 1) {
+    return [undefined, new AppError('app/user-not-found')];
+  }
+
+  return [snapshot.docs[0].data() as AppUser, undefined];
+}
+
 export async function getPreparedWithdrawal(
   userId: string,
   preparedWithdrawalId: string

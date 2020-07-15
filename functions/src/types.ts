@@ -6,7 +6,7 @@ export interface AppConfig {
 
 export interface AppUser {
   uid: string;
-  githubId?: number;
+  githubId?: number; // TODO: check if we can make this prop required, can we get it from auth user created
   accountId?: string;
   username?: string;
 }
@@ -47,7 +47,7 @@ export interface Transaction {
   withdrawalId?: string;
   accountTransferId?: string;
   txHash?: string;
-  paymentID?: string;
+  paymentId?: string;
   senderUsername?: string;
   recipientUsername?: string;
 }

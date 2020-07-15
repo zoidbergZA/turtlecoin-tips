@@ -87,7 +87,7 @@ export async function createGithubUser(githubId: number): Promise<[GithubUser | 
   const [account, accError] = await TrtlApp.createAccount();
 
   if (!account) {
-    return [undefined, new AppError('app/create-account', accError?.message)];
+    return [undefined, new AppError('app/create-account', (accError as ServiceError).message)];
   }
 
   try {

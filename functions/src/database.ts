@@ -149,6 +149,8 @@ export async function getPreparedWithdrawal(
 export async function createUnclaimedTipDoc(
   transfer: Transfer,
   timeoutDays: number,
+  senderUsername: string,
+  recipientUsername: string,
   recipientGithubId: number
 ): Promise<[UnclaimedTip | undefined, undefined | AppError]> {
   if (timeoutDays < 1) {
@@ -164,7 +166,9 @@ export async function createUnclaimedTipDoc(
       timestamp:    transfer.timestamp,
       timeoutDate:  transfer.timestamp + (timeoutDays * 24 * 60 * 60 * 1000),
       timeoutDays,
-      recipientGithubId
+      recipientGithubId,
+      senderUsername,
+      recipientUsername
     }
 
     await admin.firestore().doc(`unclaimed_tips/${transfer.id}`).set(unclaimedTip);

@@ -148,7 +148,12 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
   let response = `\`${(tipCommand.amount / 100).toFixed(2)} TRTL\` successfully sent to @${tipCommand.recipientUsername}! Visit ${frontendUrl} to manage your tips.`;
 
   if (isUnclaimed && appConfig.tipTimeoutDays > 0) {
-    const [unclaimedTip, tipError] = await db.createUnclaimedTipDoc(transfer, appConfig.tipTimeoutDays, recipientGithubId);
+    const [unclaimedTip, tipError] = await db.createUnclaimedTipDoc(
+                                      transfer,
+                                      appConfig.tipTimeoutDays,
+                                      tipCommand.senderUsername,
+                                      tipCommand.recipientUsername,
+                                      recipientGithubId);
 
     if (!unclaimedTip) {
       console.log((tipError as AppError).message);

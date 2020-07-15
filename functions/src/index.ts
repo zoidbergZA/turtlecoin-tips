@@ -239,32 +239,59 @@ async function refundAccountUnclaimedTips(githubId: number, tips: UnclaimedTip[]
   await Promise.all(tips.map(t => refundUnclaimedTip(t)));
 }
 
-async function refundUnclaimedTip(tip: UnclaimedTip): Promise<boolean> {
+async function refundUnclaimedTip(unclaimedTip: UnclaimedTip): Promise<void> {
+  const recipientAccountId = unclaimedTip.recipients[0].accountId;
+
   try {
-    await admin.firestore().runTransaction(async (txn) => {
-      const unclaimedTipRef = admin.firestore().doc(`unclaimed_tips/${tip.id}`);
+    const transfer = await admin.firestore().runTransaction(async (txn) => {
+      const unclaimedTipRef = admin.firestore().doc(`unclaimed_tips/${unclaimedTip.id}`);
       txn.delete(unclaimedTipRef);
 
-      const [transfer, transferError] = await TrtlApp.transfer(tip.recipients[0].accountId, tip.senderId, tip.recipients[0].amount);
+      // send back the original tip
+      const [result, transferError] = await TrtlApp.transfer(recipientAccountId, unclaimedTip.senderId, unclaimedTip.recipients[0].amount);
 
-      if (!transfer) {
+      if (!result) {
         throw (transferError as ServiceError).message;
       }
+
+      return result;
     });
 
-    // TODO: create 'tipRefund' transaction doc in original sender's history
+    const promisses: Promise<any>[] = [];
 
-    // TODO: delete transaction doc from the original recipient's history
+    promisses.push(db.refreshAccount(unclaimedTip.senderId));
+    promisses.push(db.refreshAccount(recipientAccountId));
 
-    await Promise.all([
-      db.refreshAccount(tip.senderId),
-      db.refreshAccount(tip.recipients[0].accountId)
-    ]);
+    // create 'tipRefund' transaction doc in original sender's history
+    const refundDocRef = admin.firestore().collection(`accounts/${unclaimedTip.senderId}/transactions`).doc();
+    const refundTx: Transaction = {
+      id:                 refundDocRef.id,
+      accountId:          recipientAccountId,
+      timestamp:          transfer.timestamp,
+      transferType:       'tipRefund',
+      amount:             transfer.recipients[0].amount,
+      fee:                0,
+      status:             'completed',
+      accountTransferId:  transfer.id,
+      senderUsername:     unclaimedTip.recipientUsername,
+      recipientUsername:  unclaimedTip.senderUsername
+    }
 
-    return true;
+    promisses.push(refundDocRef.set(refundTx));
+
+    // delete unclaimed tip from recipient's transaction history
+    const snapshot = await admin.firestore()
+                      .collection(`account/${recipientAccountId}/transactions`)
+                      .where('accountTransferId', '==', unclaimedTip.id)
+                      .get();
+
+    if (snapshot.size === 1) {
+      promisses.push(snapshot.docs[0].ref.delete());
+    }
+
+    await Promise.all(promisses);
   } catch (e) {
     console.log('refund tip failure: ', e);
-    return false;
   }
 }
 

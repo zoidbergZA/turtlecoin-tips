@@ -27,6 +27,8 @@ export interface UnclaimedTip extends Transfer {
   timeoutDays: number;
   timeoutDate: number;
   recipientGithubId: number;
+  recipientUsername: string;
+  senderUsername: string;
 }
 
 export type TransactionType = 'deposit' | 'withdrawal' | 'tip' | 'tipRefund';
@@ -34,9 +36,9 @@ export type TransactionStatus = 'confirming' | 'completed' | 'failed';
 
 export interface Transaction {
   id: string;
-  userId: string;
+  userId?: string;
   accountId: string;
-  githubId: number,
+  githubId?: number,
   timestamp: number;
   transferType: TransactionType;
   amount: number;

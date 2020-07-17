@@ -10,10 +10,10 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div>
+        <React.Fragment>
           <PrivateRoute exact path="/" component={Home}/>
           <Route exact path="/login" component={Login}/>
-        </div>
+        </React.Fragment>
       </Router>
     </AuthProvider>
   );

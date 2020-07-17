@@ -1,15 +1,21 @@
 import React from 'react';
+import { BrowserRouter as Router, Route } from 'react-router-dom';
 import './App.scss';
-import Button from 'react-bulma-components/lib/components/button';
-import Heading from 'react-bulma-components/lib/components/heading';
+import { AuthProvider } from './contexts/Auth';
+import PrivateRoute from './hoc/PrivateRoute';
+import Home from './components/Home';
+import Login from './components/Login';
 
 function App() {
   return (
-    <Heading>hello world</Heading>
-    // <Button.Group>
-    //   <Button color="primary">my bulma button</Button>
-    //   <Button color="primary">my other button</Button>
-    // </Button.Group>
+    <AuthProvider>
+      <Router>
+        <div>
+          <PrivateRoute exact path="/" component={Home}/>
+          <Route exact path="/login" component={Login}/>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 

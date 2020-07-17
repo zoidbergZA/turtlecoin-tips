@@ -69,11 +69,13 @@ exports.onNewAuthUserCreated = functions.auth.user().onCreate(async (user) => {
   console.log(`creating new user => uid: ${user.uid}`);
   console.log(`user provider data: ${JSON.stringify(user.providerData)}`);
 
-  const appUser: AppUser = {
-    uid: user.uid
-  }
+  const githubInfo = user.providerData[0];
 
-  // TODO: get githubId from providers or API call
+  const appUser: AppUser = {
+    uid: user.uid,
+    username: githubInfo.displayName,
+    githubId: Number.parseInt(githubInfo.uid)
+  }
 
   if (appUser.githubId) {
     const [account] = await db.getTurtleAccount(appUser.githubId);

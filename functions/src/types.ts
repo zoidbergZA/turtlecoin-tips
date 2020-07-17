@@ -6,9 +6,9 @@ export interface AppConfig {
 
 export interface AppUser {
   uid: string;
-  githubId?: number; // TODO: check if we can make this prop required, can we get it from auth user created
+  githubId: number;
   accountId?: string;
-  username?: string;
+  username: string;
 }
 
 export interface GithubUser {

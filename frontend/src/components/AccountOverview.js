@@ -1,10 +1,8 @@
 import React from 'react';
 
-const AccountOverview = ({ account }) => {
-  console.log(account);
-
+const AccountOverview = ( {depositAddress} ) => {
   return (
-    <p>hello from account view</p>
+    <p>deposit address: {depositAddress}</p>
   );
 }
 

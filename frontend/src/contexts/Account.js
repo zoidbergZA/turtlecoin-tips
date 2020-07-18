@@ -13,18 +13,16 @@ export const TurtleAccountProvider = ({ children }) => {
   useEffect(() => {
     authState(app.auth())
     .pipe(
-      switchMap(user => {
-        if (user) {
-          return doc(app.firestore().doc(`users/${user.uid}`));
+      switchMap(u => {
+        if (u) {
+          return doc(app.firestore().doc(`users/${u.uid}`));
         }
         return from([]);
       }),
-      map(userDoc => userDoc.data())
-    )
-    .pipe(
-      switchMap(appUser => {
-        if (appUser && appUser.accountId) {
-          return doc(app.firestore().doc(`accounts/${appUser.accountId}`));
+      map(userDoc => userDoc.data()),
+      switchMap(user => {
+        if (user && user.accountId) {
+          return doc(app.firestore().doc(`accounts/${user.accountId}`));
         } else {
           return from([]);
         }

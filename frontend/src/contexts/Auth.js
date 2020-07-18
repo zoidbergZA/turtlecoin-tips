@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import app from '../base';
+import { authState } from 'rxfire/auth';
+import { doc } from 'rxfire/firestore';
+import { map, switchMap } from 'rxjs/operators'
+import { from } from 'rxjs';
 
 export const AuthContext = React.createContext();
 
@@ -8,7 +12,19 @@ export const AuthProvider = ({ children }) => {
   const [pending, setPending] = useState(true);
 
   useEffect(() => {
-    app.auth().onAuthStateChanged(user => {
+    authState(app.auth())
+    .pipe(
+      switchMap(u => {
+        if (u) {
+          return doc(app.firestore().doc(`users/${u.uid}`));
+        } else {
+          setCurrentUser(null);
+          setPending(false);
+          return from([]);
+        }
+      }),
+      map(userDoc => userDoc.data())
+    ).subscribe(user => {
       setCurrentUser(user);
       setPending(false);
     });

@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Account = ({ account }) => {
+const AccountOverview = ({ account }) => {
   console.log(account);
 
   return (
@@ -8,4 +8,4 @@ const Account = ({ account }) => {
   );
 }
 
-export default Account;
+export default AccountOverview;

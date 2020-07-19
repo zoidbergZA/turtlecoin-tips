@@ -6,12 +6,14 @@ import { TurtleAccountProvider } from './contexts/Account'
 import PrivateRoute from './hoc/PrivateRoute';
 import Home from './components/Home';
 import Login from './components/Login';
+import TopNav from './components/TopNav';
 
 function App() {
   return (
     <AuthProvider>
       <Router>
         <React.Fragment>
+          <TopNav />
           <TurtleAccountProvider>
             <PrivateRoute exact path="/" component={Home}/>
           </TurtleAccountProvider>

@@ -5,6 +5,7 @@ import Icon from 'react-bulma-components/lib/components/icon';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faLock } from '@fortawesome/free-solid-svg-icons';
 import app from '../base';
+import logo from '../assets/logo-med.png';
 
 const TopNav = () => {
   const { currentUser } = useContext(AuthContext);
@@ -16,8 +17,8 @@ const TopNav = () => {
   return (
     <Navbar fixed="top">
       <Navbar.Brand>
-        <Navbar.Item renderAs="a" href="#">
-          <img src="https://bulma.io/images/bulma-logo.png" alt="Bulma" width="112" height="28" />
+        <Navbar.Item renderAs="a">
+          <img src={logo} alt="logo" width="28" height="28" /><p>tips</p>
         </Navbar.Item>
         <Navbar.Burger />
       </Navbar.Brand>

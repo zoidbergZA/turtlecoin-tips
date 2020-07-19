@@ -10,17 +10,19 @@ import TopNav from './components/TopNav';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <React.Fragment>
-          <TopNav />
-          <TurtleAccountProvider>
-            <PrivateRoute exact path="/" component={Home}/>
-          </TurtleAccountProvider>
-          <Route exact path="/login" component={Login}/>
-        </React.Fragment>
-      </Router>
-    </AuthProvider>
+    <div className="App">
+      <AuthProvider>
+        <Router>
+          <React.Fragment>
+            <TopNav />
+            <TurtleAccountProvider>
+              <PrivateRoute exact path="/" component={Home}/>
+            </TurtleAccountProvider>
+            <Route exact path="/login" component={Login}/>
+          </React.Fragment>
+        </Router>
+      </AuthProvider>
+    </div>
   );
 }
 

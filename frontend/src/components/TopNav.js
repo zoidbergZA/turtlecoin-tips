@@ -1,4 +1,5 @@
 import React, { useContext } from 'react'
+import { Link } from 'react-router-dom';
 import Navbar from 'react-bulma-components/lib/components/navbar';
 import { AuthContext } from '../contexts/Auth';
 import Icon from 'react-bulma-components/lib/components/icon';
@@ -17,7 +18,7 @@ const TopNav = () => {
   return (
     <Navbar fixed="top">
       <Navbar.Brand>
-        <Navbar.Item renderAs="a">
+        <Navbar.Item renderAs={Link} to="/">
           <img src={logo} alt="logo" width="28" height="28" /><p>tips</p>
         </Navbar.Item>
         <Navbar.Burger />

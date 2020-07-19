@@ -4,9 +4,10 @@ import './App.scss';
 import { AuthProvider } from './contexts/Auth';
 import { TurtleAccountProvider } from './contexts/Account'
 import PrivateRoute from './hoc/PrivateRoute';
+import TopNav from './components/TopNav';
 import Home from './components/Home';
 import Login from './components/Login';
-import TopNav from './components/TopNav';
+import Withdraw from './components/Withdraw/Withdraw';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <TopNav />
             <TurtleAccountProvider>
               <PrivateRoute exact path="/" component={Home}/>
+              <PrivateRoute exact path="/withdraw" component={Withdraw}/>
             </TurtleAccountProvider>
             <Route exact path="/login" component={Login}/>
           </React.Fragment>

@@ -1,11 +1,16 @@
 import React, { useContext } from 'react';
 import app from '../base';
+import * as firebase from 'firebase/app';
 import { AuthContext } from '../contexts/Auth';
 import Button from 'react-bulma-components/lib/components/button';
 import Heading from 'react-bulma-components/lib/components/heading';
+import Icon from 'react-bulma-components/lib/components/icon';
+import Section from 'react-bulma-components/lib/components/section';
+import Container from 'react-bulma-components/lib/components/container';
 import { Redirect } from 'react-router';
-
-import * as firebase from 'firebase/app';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faGithub } from '@fortawesome/free-brands-svg-icons';
+import logo from '../assets/logo-large.png';
 
 const Login = ({ history }) => {
   const loginClickHandler = () => {
@@ -30,10 +35,18 @@ const Login = ({ history }) => {
   }
 
   return (
-    <React.Fragment>
-      <Heading>Login</Heading>
-      <Button onClick={loginClickHandler}>Login with Github</Button>
-    </React.Fragment>
+    <Section>
+      <Container>
+        <Heading>TurtleCoin Tips</Heading>
+        <div style={{ margin: "40px" }}>
+          <img src={logo} width="300" />
+        </div>
+        <Button onClick={loginClickHandler}>
+          <FontAwesomeIcon icon={faGithub}></FontAwesomeIcon>
+          <span style={{ paddingLeft: "5px" }}> Login with Github</span>
+        </Button>
+      </Container>
+    </Section>
   );
 }
 

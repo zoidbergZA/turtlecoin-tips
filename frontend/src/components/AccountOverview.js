@@ -1,9 +1,12 @@
 import React from 'react';
+import CopyBox from './CopyBox/CopyBox';
 import Heading from 'react-bulma-components/lib/components/heading';
 import Container from 'react-bulma-components/lib/components/container';
 import Image from 'react-bulma-components/lib/components/image';
 import Section from 'react-bulma-components/lib/components/section';
-import CopyBox from './CopyBox/CopyBox';
+import Button from 'react-bulma-components/lib/components/button';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faEject } from '@fortawesome/free-solid-svg-icons';
 
 const AccountOverview = ( {depositAddress, depositQrCode, balanceLocked, balanceUnlocked} ) => {
   let amountLocked;
@@ -22,6 +25,7 @@ const AccountOverview = ( {depositAddress, depositQrCode, balanceLocked, balance
         </div>
         <p>deposit address:</p>
         <CopyBox data={depositAddress} />
+        <Button><FontAwesomeIcon icon={faEject}></FontAwesomeIcon> withdraw</Button>
       </Container>
     </Section>
   );

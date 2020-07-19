@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useState } from 'react'
 import { Link } from 'react-router-dom';
 import Navbar from 'react-bulma-components/lib/components/navbar';
 import { AuthContext } from '../contexts/Auth';
@@ -10,28 +10,34 @@ import logo from '../assets/logo-med.png';
 
 const TopNav = () => {
   const { currentUser } = useContext(AuthContext);
+  const [ dropdownOpen, setDropdownOpen ] = useState(false);
 
   if (!currentUser) {
     return null;
   }
 
+  const menuClickHandler = () => {
+    setDropdownOpen(!dropdownOpen);
+  }
+
   return (
-    <Navbar fixed="top">
+    <Navbar fixed="top" active={dropdownOpen}>
       <Navbar.Brand>
         <Navbar.Item renderAs={Link} to="/">
           <img src={logo} alt="logo" width="28" height="28" /><p>tips</p>
         </Navbar.Item>
-        <Navbar.Burger />
+        <Navbar.Burger onClick={menuClickHandler} />
       </Navbar.Brand>
       <Navbar.Menu>
         <Navbar.Container position="end">
-          <Navbar.Item>
+          <Navbar.Item renderAs="p">
             {currentUser.username}
           </Navbar.Item>
           <Navbar.Item>
             <Icon onClick={() => app.auth().signOut()}>
               <FontAwesomeIcon icon={faLock} />
             </Icon>
+            <span>lock</span>
           </Navbar.Item>
         </Navbar.Container>
       </Navbar.Menu>

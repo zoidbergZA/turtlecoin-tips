@@ -1,7 +1,6 @@
 import React, { useContext } from 'react'
 import Navbar from 'react-bulma-components/lib/components/navbar';
 import { AuthContext } from '../contexts/Auth';
-import Button from 'react-bulma-components/lib/components/button';
 import Icon from 'react-bulma-components/lib/components/icon';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faLock } from '@fortawesome/free-solid-svg-icons';
@@ -13,7 +12,6 @@ const TopNav = () => {
   if (!currentUser) {
     return null;
   }
-  // <Icon icon="home" color="info" onClick={() => app.auth().signOut()} />
 
   return (
     <Navbar fixed="top">

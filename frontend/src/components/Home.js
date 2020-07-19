@@ -1,12 +1,12 @@
 import React, { useContext } from 'react';
-import { AuthContext } from '../contexts/Auth';
 import { TurtleAccountContext } from '../contexts/Account';
 import AccountOverview from './AccountOverview';
+import Container from 'react-bulma-components/lib/components/container';
+import Section from 'react-bulma-components/lib/components/section';
 
 const Home = () => {
   let accountView;
 
-  const { currentUser } = useContext(AuthContext);
   const { turtleAccount } = useContext(TurtleAccountContext);
 
   if (turtleAccount) {
@@ -16,10 +16,13 @@ const Home = () => {
   }
 
   return (
-    <div>
-      <h1 >{ currentUser ? currentUser.username : '' }</h1>
-      {accountView}
-    </div>
+    <React.Fragment>
+      <Section>
+        <Container>
+          {accountView}
+        </Container>
+      </Section>
+    </React.Fragment>
   );
 }
 

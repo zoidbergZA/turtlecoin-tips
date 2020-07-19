@@ -3,6 +3,7 @@ import Heading from 'react-bulma-components/lib/components/heading';
 import Container from 'react-bulma-components/lib/components/container';
 import Image from 'react-bulma-components/lib/components/image';
 import Section from 'react-bulma-components/lib/components/section';
+import CopyBox from './CopyBox/CopyBox';
 
 const AccountOverview = ( {depositAddress, depositQrCode, balanceLocked, balanceUnlocked} ) => {
   let amountLocked;
@@ -19,7 +20,8 @@ const AccountOverview = ( {depositAddress, depositQrCode, balanceLocked, balance
         <div style={{ width: 320, display : 'inline-block' }}>
           <Image src={depositQrCode} size="1by1"></Image>
         </div>
-        <p>deposit address: {depositAddress}</p>
+        <p>deposit address:</p>
+        <CopyBox data={depositAddress} />
       </Container>
     </Section>
   );

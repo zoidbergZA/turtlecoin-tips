@@ -24,14 +24,19 @@ export async function processWebhookCall(requestBody: any): Promise<void> {
   switch (code) {
     case 'deposit/confirming':
       await proccesConfirmingDeposit(data as Deposit);
+      break;
     case 'deposit/succeeded':
       await processSuccessfulDeposit(data as Deposit);
+      break;
     case 'deposit/cancelled':
       await processCancelledDeposit(data as Deposit);
+      break;
     case 'withdrawal/succeeded':
       await processWithdrawalSucceeded(data as Withdrawal);
+      break;
     case 'withdrawal/failed':
       await processWithdrawalFailed(data as Withdrawal);
+      break;
     default:
       console.log(`Invalid webhook callback code: ${code}`);
       return;

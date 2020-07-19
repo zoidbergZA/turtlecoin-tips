@@ -3,6 +3,8 @@ import Navbar from 'react-bulma-components/lib/components/navbar';
 import { AuthContext } from '../contexts/Auth';
 import Button from 'react-bulma-components/lib/components/button';
 import Icon from 'react-bulma-components/lib/components/icon';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faLock } from '@fortawesome/free-solid-svg-icons';
 import app from '../base';
 
 const TopNav = () => {
@@ -11,6 +13,7 @@ const TopNav = () => {
   if (!currentUser) {
     return null;
   }
+  // <Icon icon="home" color="info" onClick={() => app.auth().signOut()} />
 
   return (
     <Navbar fixed="top">
@@ -26,7 +29,9 @@ const TopNav = () => {
             {currentUser.username}
           </Navbar.Item>
           <Navbar.Item>
-          <Icon icon="home" color="info" onClick={() => app.auth().signOut()} />
+            <Icon onClick={() => app.auth().signOut()}>
+              <FontAwesomeIcon icon={faLock} />
+            </Icon>
           </Navbar.Item>
         </Navbar.Container>
       </Navbar.Menu>

@@ -7,7 +7,7 @@ import Image from 'react-bulma-components/lib/components/image';
 import Section from 'react-bulma-components/lib/components/section';
 import Button from 'react-bulma-components/lib/components/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronUp } from '@fortawesome/free-solid-svg-icons';
+import { faChevronUp, faHistory } from '@fortawesome/free-solid-svg-icons';
 
 const AccountOverview = ( {depositAddress, depositQrCode, balanceLocked, balanceUnlocked} ) => {
   let amountLocked;
@@ -27,10 +27,16 @@ const AccountOverview = ( {depositAddress, depositQrCode, balanceLocked, balance
         <p>deposit address:</p>
         <CopyBox data={depositAddress} />
         <div style={{ marginTop: "15px" }}>
-          <Button color="primary" to="/withdraw" renderAs={Link}>
-            <FontAwesomeIcon icon={faChevronUp}></FontAwesomeIcon>
-            <span style={{ paddingLeft: "5px" }}>withdraw</span>
-          </Button>
+          <Button.Group position="centered">
+            <Button color="primary" to="/withdraw" renderAs={Link}>
+              <FontAwesomeIcon icon={faChevronUp}></FontAwesomeIcon>
+              <span style={{ paddingLeft: "5px" }}>withdraw</span>
+            </Button>
+            <Button color="info" to="/history" renderAs={Link}>
+              <FontAwesomeIcon icon={faHistory}></FontAwesomeIcon>
+              <span style={{ paddingLeft: "5px" }}>transaction history</span>
+            </Button>
+          </Button.Group>
         </div>
         </Container>
     </Section>

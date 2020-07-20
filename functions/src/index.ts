@@ -223,7 +223,10 @@ async function sendPreparedWithdrawal(
     paymentId:      withdrawal.paymentId
   }
 
-  await docRef.set(transaction);
+  await Promise.all([
+    docRef.set(transaction),
+    db.refreshAccount(preparedWithdrawal.accountId)
+  ]);
 
   return [withdrawal, undefined];
 }
@@ -324,7 +327,7 @@ async function prepareWithdrawToAddress(
     return [undefined, (error as AppError)];
   }
 
-  const docRef = admin.firestore().collection(`users/${userId}/preparedWithdrawals`).doc();
+  const docRef = admin.firestore().doc(`users/${userId}/preparedWithdrawals/${preview.id}`);
   await docRef.create(preview);
 
   return [preview, undefined];

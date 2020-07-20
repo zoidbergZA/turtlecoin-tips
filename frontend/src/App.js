@@ -8,6 +8,7 @@ import TopNav from './components/TopNav';
 import Home from './components/Home';
 import Login from './components/Login';
 import Withdraw from './components/Withdraw/Withdraw';
+import History from './components/History';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
             <TurtleAccountProvider>
               <PrivateRoute exact path="/" component={Home}/>
               <PrivateRoute exact path="/withdraw" component={Withdraw}/>
+              <PrivateRoute exact path="/history" component={History}/>
             </TurtleAccountProvider>
             <Route exact path="/login" component={Login}/>
           </React.Fragment>

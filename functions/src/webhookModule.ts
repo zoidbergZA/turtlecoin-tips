@@ -138,7 +138,7 @@ async function processCancelledDeposit(deposit: Deposit): Promise<void> {
 }
 
 async function processWithdrawalSucceeded(withdrawal: Withdrawal): Promise<void> {
-  console.log(`process cancelled deposit: ${withdrawal.id}`);
+  console.log(`process withdrawal succeeded: ${withdrawal.id}`);
 
   await db.refreshAccount(withdrawal.accountId);
 

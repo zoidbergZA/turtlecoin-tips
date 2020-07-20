@@ -3,3 +3,12 @@
 .App {
   text-align: center;
 }
+
+.address-text {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  font-family: Hack;
+  font-size: small;
+  background-color: #f8f8f8;
+  padding: 10px;
+}

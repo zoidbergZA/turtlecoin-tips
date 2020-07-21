@@ -1,5 +1,5 @@
 import React from 'react';
-import transaction from './Transaction.scss';
+import './Transaction.scss';
 
 const Transaction = ({ tx }) => {
   return (
@@ -29,7 +29,7 @@ function getInfoText(tx) {
 function getAmountText(tx) {
   let prefix = '-';
 
-  if (tx.transferType == 'deposit' || tx.transferType === 'tipRefund') {
+  if (tx.transferType === 'deposit' || tx.transferType === 'tipRefund') {
     prefix = '+';
   }
 
@@ -55,7 +55,7 @@ function convertTimestamp(timestamp) {
   } else if (hh === 12) {
       h = 12;
       ampm = 'PM';
-  } else if (hh == 0) {
+  } else if (hh === 0) {
       h = 12;
   }
 

@@ -173,7 +173,7 @@ exports.turtleWebhook = functions.https.onRequest(async (request: functions.http
   response.status(200).send('OK');
 });
 
-exports.refundUnclaimedTips = functions.pubsub.schedule('every 6 minutes').onRun(async (context) => {
+exports.refundUnclaimedTips = functions.pubsub.schedule('every 2 hours').onRun(async (context) => {
   const expiredTips = await db.getUnclaimedTips(undefined, true);
 
   if (expiredTips.length === 0) {

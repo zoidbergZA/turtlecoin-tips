@@ -4,7 +4,6 @@ import * as firebase from 'firebase/app';
 import { AuthContext } from '../contexts/Auth';
 import Button from 'react-bulma-components/lib/components/button';
 import Heading from 'react-bulma-components/lib/components/heading';
-import Icon from 'react-bulma-components/lib/components/icon';
 import Section from 'react-bulma-components/lib/components/section';
 import Container from 'react-bulma-components/lib/components/container';
 import { Redirect } from 'react-router';
@@ -39,7 +38,7 @@ const Login = ({ history }) => {
       <Container>
         <Heading>TurtleCoin Tips</Heading>
         <div style={{ margin: "40px" }}>
-          <img src={logo} width="300" />
+          <img src={logo} width="300" alt="logo" />
         </div>
         <Button onClick={loginClickHandler}>
           <FontAwesomeIcon icon={faGithub}></FontAwesomeIcon>

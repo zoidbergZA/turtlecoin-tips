@@ -24,7 +24,7 @@ const History = () => {
         setTransactions(txs);
       });
     }
-  }, []);
+  }, [currentUser]);
 
   let history;
 

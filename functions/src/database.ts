@@ -121,6 +121,8 @@ export async function refreshAccount(accountId: string): Promise<void> {
 }
 
 export async function getAccountOwner(accountId: string): Promise<[AppUser | undefined, undefined | AppError]> {
+  console.log(`get AppUser by accountId: [${accountId}]...`);
+
   const snapshot = await admin.firestore()
                     .collection('users')
                     .where('accountId', '==', accountId)

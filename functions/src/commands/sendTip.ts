@@ -78,11 +78,9 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
   }
 
   const [recipientAccount, recipientAccError] = await db.getTurtleAccount(recipientGithubId);
-  let isUnclaimed = false;
   let recipientAccountId: string | undefined;
 
   if (!recipientAccount) {
-    isUnclaimed = true;
     const [recipientGithubUser, createError] = await db.createGithubUser(recipientGithubId);
 
     if (recipientGithubUser) {
@@ -145,20 +143,26 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
     db.refreshAccount(recipientAccountId)
   ]);
 
-  let response = `\`${(tipCommand.amount / 100).toFixed(2)} TRTL\` successfully sent to @${tipCommand.recipientUsername}! Visit ${frontendUrl} to manage your tips.`;
+  let response = `\`${(tipCommand.amount / 100).toFixed(2)} TRTL\` tip successfully sent to @${tipCommand.recipientUsername}! Visit ${frontendUrl} to manage your tips.`;
 
-  if (isUnclaimed && appConfig.tipTimeoutDays > 0) {
-    const [unclaimedTip, tipError] = await db.createUnclaimedTipDoc(
-                                      transfer,
-                                      appConfig.tipTimeoutDays,
-                                      tipCommand.senderUsername,
-                                      tipCommand.recipientUsername,
-                                      recipientGithubId);
+  const [recipientAppUser] = await db.getAccountOwner(recipientAccountId);
 
-    if (!unclaimedTip) {
-      console.log((tipError as AppError).message);
-    } else {
-      response += `\n\n @${tipCommand.recipientUsername} you have not linked a tips account yet, visit ${frontendUrl} to activate your tips account. You have ${unclaimedTip.timeoutDays} days to claim your tip before @${sendingUser} is refunded!`;
+  if (!recipientAppUser) {
+    response += `\n\n @${tipCommand.recipientUsername} you have not linked a tips account yet, visit ${frontendUrl} to activate your account.`;
+
+    if (appConfig.tipTimeoutDays > 0) {
+      const [doc, tipError] = await db.createUnclaimedTipDoc(
+                                transfer,
+                                appConfig.tipTimeoutDays,
+                                tipCommand.senderUsername,
+                                tipCommand.recipientUsername,
+                                recipientGithubId);
+
+      if (!doc) {
+        console.log((tipError as AppError).message);
+      } else {
+        response += ` You have ${doc.timeoutDays} days to claim your tip before @${tipCommand.senderUsername} is refunded!`;
+      }
     }
   }
 

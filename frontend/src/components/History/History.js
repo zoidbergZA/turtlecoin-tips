@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
 import app from '../../base';
-import { collection } from 'rxfire/firestore';
+import { collectionData } from 'rxfire/firestore';
 import { AuthContext } from 'contexts/Auth';
-import Transaction from './Transaction';
+import Transaction from './Transaction/Transaction';
 import Heading from 'react-bulma-components/lib/components/heading';
 import Container from 'react-bulma-components/lib/components/container';
 import Section from 'react-bulma-components/lib/components/section';
 import Table from 'react-bulma-components/lib/components/table';
+import Spinner from '../Spinner/Spinner';
 
 const History = () => {
   const { currentUser } = useContext(AuthContext);
@@ -14,7 +15,7 @@ const History = () => {
 
   useEffect(() => {
     if (currentUser && currentUser.accountId) {
-      collection(
+      collectionData(
         app.firestore()
         .collection(`accounts/${currentUser.accountId}/transactions`)
         .orderBy('timestamp', 'desc')
@@ -31,14 +32,12 @@ const History = () => {
     history = (
       <Table>
         <tbody>
-        {transactions.map(tx => {
-          return <Transaction key={tx.id} tx={tx}></Transaction>
-        })}
+          {transactions.map(tx => <Transaction key={tx.id} tx={tx}></Transaction>)}
         </tbody>
       </Table>
     )
   } else {
-    history = <p>loading...</p>
+    history = <Spinner />
   }
 
   return (

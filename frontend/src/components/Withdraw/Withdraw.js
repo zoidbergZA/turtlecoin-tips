@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import withdraw from './withdraw.scss';
 import * as Form from 'react-bulma-components/lib/components/form';
 import Section from 'react-bulma-components/lib/components/section';
+import Container from 'react-bulma-components/lib/components/container';
 import Button from 'react-bulma-components/lib/components/button';
 import Box from 'react-bulma-components/lib/components/box';
 import Heading from 'react-bulma-components/lib/components/heading';
 import Level from 'react-bulma-components/lib/components/level';
 import Spinner from '../Spinner/Spinner';
+import CopyBox from '../CopyBox/CopyBox';
 import app from '../../base';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPaperPlane, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faChevronLeft, faChevronRight, faCheck } from '@fortawesome/free-solid-svg-icons';
 
 const Withdraw = () => {
   const [busyMessage, setBusyMessage]   = useState(null);
@@ -43,8 +46,6 @@ const Withdraw = () => {
     setBusyMessage('sending transaction...');
 
     try {
-      console.log(`send prepared withdrawal: ${preparedTx.id}`);
-
       const sendWithdrawal = app.functions().httpsCallable('userWithdraw');
       const sendResult = await sendWithdrawal({ preparedTxId: preparedTx.id });
 
@@ -64,11 +65,11 @@ const Withdraw = () => {
   if (busyMessage) {
     return (
       <Section>
-        <Box>
+        <Container>
           <div style={{ paddingTop: "50px", paddingBottom: "20px" }}>
             <Spinner message={busyMessage} />
           </div>
-        </Box>
+        </Container>
       </Section>
     );
   }
@@ -76,10 +77,19 @@ const Withdraw = () => {
   if (withdrawal) {
     return (
       <Section>
-        <Box>
-          <p>success!</p>
-          <p>tx hash: {withdrawal.txHash} </p>
-        </Box>
+        <Container>
+          <Heading>Transaction sent!</Heading>
+          <p>hash:</p>
+          <div style={{ maxWidth: "600px", display: "inline-block" }}>
+            <CopyBox data={withdrawal.txHash}></CopyBox>
+          </div>
+          <Section>
+            <Button to="/" renderAs={Link}>
+              <FontAwesomeIcon icon={faCheck}></FontAwesomeIcon>
+              <span className="btn-icon-text">done</span>
+            </Button>
+          </Section>
+          </Container>
       </Section>
     );
   }
@@ -89,7 +99,7 @@ const Withdraw = () => {
 
     return (
       <Section>
-        <Box>
+        <Container>
           <Heading>Confirm send</Heading>
           <p className="address-text">{preparedTx.address}</p>
           <div className="amounts-box">
@@ -122,14 +132,14 @@ const Withdraw = () => {
               </Level.Item>
             </Level>
           </Section>
-        </Box>
+        </Container>
       </Section>
     );
   }
 
   return (
     <Section>
-      <Box>
+      <Container>
         <Heading>Withdraw</Heading>
         {
           !!errorMessage &&
@@ -167,12 +177,30 @@ const Withdraw = () => {
             </Form.Control>
           </Form.Field>
           <Form.Field>
+            <Level>
+            <Level.Item type="left">
+              <Button to="/" renderAs={Link}>
+                <FontAwesomeIcon icon={faChevronLeft}></FontAwesomeIcon>
+                <span className="btn-icon-text">back</span>
+              </Button>
+            </Level.Item>
+            <Level.Item type="right">
             <Form.Control>
-              <Button type="submit" value="Submit" disabled={!formState.isValid}>continue</Button>
+              <Button
+                color="primary"
+                type="submit"
+                value="Submit"
+                disabled={!formState.isValid}
+              >
+                <FontAwesomeIcon icon={faChevronRight}></FontAwesomeIcon>
+                <span className="btn-icon-text">continue</span>
+              </Button>
             </Form.Control>
+            </Level.Item>
+            </Level>
           </Form.Field>
         </form>
-      </Box>
+      </Container>
     </Section>
   );
 };

@@ -1,3 +1,16 @@
-.amount-text {
+.amounts-box {
+  margin-top: 20px;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+.tbl-label {
+  font-weight: bold;
+}
+.tbl-value {
+  padding-left: 20px;
+}
+.btn-icon-text {
   padding-left: 10px;
 }

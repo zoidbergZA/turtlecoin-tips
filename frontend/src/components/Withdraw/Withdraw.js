@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import withdraw from './withdraw.scss';
 import * as Form from 'react-bulma-components/lib/components/form';
 import Section from 'react-bulma-components/lib/components/section';
 import Button from 'react-bulma-components/lib/components/button';
@@ -8,23 +9,12 @@ import Heading from 'react-bulma-components/lib/components/heading';
 import Level from 'react-bulma-components/lib/components/level';
 import Spinner from '../Spinner/Spinner';
 import app from '../../base';
-import withdraw from './withdraw.scss';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faPaperPlane, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
 
 const Withdraw = () => {
   const [busyMessage, setBusyMessage]   = useState(null);
-  const [preparedTx, setPreparedTx]     = useState({
-    "id": "ZJcBGPQHEOD6rhdjAiH3",
-    "appId": "1eV04zEK7dJFz85KmzQp",
-    "accountId": "KjnOLhhrADUoD8zQud3M",
-    "timestamp": 1595279756761,
-    "address": "TRTLv32bGBP2cfM3SdijU4TTYnCPoR33g5eTas6n9HamBvu8ozc9BZHWza5j7cmBFSgh4dmmGRongfoEEzcvuAEF8dLxixsS7he",
-    "amount": 200,
-    "fees": {
-        "txFee": 3000,
-        "nodeFee": 0,
-        "serviceFee": 0
-    }
-});
+  const [preparedTx, setPreparedTx]     = useState(null);
   const [withdrawal, setWithdrawal]     = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
 
@@ -38,7 +28,7 @@ const Withdraw = () => {
       const prepareWithdrawal = app.functions().httpsCallable('userPrepareWithdrawal');
       const prepareResult = await prepareWithdrawal({
         address: data.address,
-        amount: data.amount * 100
+        amount: Math.ceil(data.amount * 100)
       });
 
       setPreparedTx(prepareResult.data);
@@ -102,17 +92,33 @@ const Withdraw = () => {
         <Box>
           <Heading>Confirm send</Heading>
           <p className="address-text">{preparedTx.address}</p>
-          <div style={{ textAlign: "left" }}>
-            <p>amount: <span className="amount-text">50000.95 TRTL</span></p>
-            <p>fee: <span className="amount-text">30 TRTL</span></p>
+          <div className="amounts-box">
+            <table>
+            <tbody>
+              <tr>
+                <td className="tbl-label">amount:</td>
+                <td className="tbl-value">{preparedTx.amount / 100} TRTL</td>
+              </tr>
+              <tr>
+                <td className="tbl-label">fee:</td>
+                <td className="tbl-value">{fees / 100} TRTL</td>
+              </tr>
+            </tbody>
+          </table>
           </div>
           <Section>
             <Level>
               <Level.Item type="left">
-                <Button onClick={onBack}>back</Button>
+                <Button onClick={onBack}>
+                  <FontAwesomeIcon icon={faChevronLeft}></FontAwesomeIcon>
+                  <span className="btn-icon-text">back</span>
+                </Button>
               </Level.Item>
               <Level.Item type="right">
-                <Button onClick={onConfirm}>confirm</Button>
+                <Button onClick={onConfirm} color="primary">
+                  <FontAwesomeIcon icon={faPaperPlane}></FontAwesomeIcon>
+                  <span className="btn-icon-text">confirm</span>
+                </Button>
               </Level.Item>
             </Level>
           </Section>

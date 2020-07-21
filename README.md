@@ -26,17 +26,11 @@ firebase functions:config:set trtl.app_secret="YOUR TRTL APP SECRET"
 firebase functions:config:set frontend.url="https://example.com"
 ```
 
-```sh
-# Install dependencies
-npm install
+## Project structure
 
-# Run with hot reload
-npm run build:watch
+The tip bot frontend React app can be found in the `/frontend` folder.
 
-# Compile and run
-npm run build
-npm run start
-```
+The backend code is located in the `/functions` folder.
 
 ## Contributing
 

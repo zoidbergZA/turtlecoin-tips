@@ -18,14 +18,21 @@ function getInfoText(tx) {
     case 'withdrawal':
       return tx.txHash;
     case 'tip':
-      return `@${tx.recipientUsername}`;
+      return `to @${tx.recipientUsername}`;
+    case 'tipRefund':
+      return `from @${tx.senderUsername}`;
     default:
       return '';
   }
 }
 
 function getAmountText(tx) {
-  const prefix = tx.transferType == ('deposit' || 'tipRefund') ? '+' : '-';
+  let prefix = '-';
+
+  if (tx.transferType == 'deposit' || tx.transferType === 'tipRefund') {
+    prefix = '+';
+  }
+
   const amount = `${((tx.amount + tx.fee) / 100).toFixed(2)} TRTL`
 
   return `${prefix}${amount}`;

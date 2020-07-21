@@ -173,12 +173,18 @@ exports.turtleWebhook = functions.https.onRequest(async (request: functions.http
   response.status(200).send('OK');
 });
 
-exports.refundUnclaimedTips = functions.pubsub.schedule('every 6 hours').onRun(async (context) => {
+exports.refundUnclaimedTips = functions.pubsub.schedule('every 6 minutes').onRun(async (context) => {
   const expiredTips = await db.getUnclaimedTips(undefined, true);
 
   if (expiredTips.length === 0) {
     return;
   }
+
+  expiredTips.forEach(t => {
+    const now = Date.now();
+
+    console.log(`found expired unclaimed tip: id: ${t.id}, timeoutDate: ${t.timeoutDate}, now: ${now}`);
+  });
 
   const unclaimedTipGroups = groupBy(expiredTips, t => t.recipientGithubId);
 
@@ -245,6 +251,8 @@ async function refundAccountUnclaimedTips(githubId: number, tips: UnclaimedTip[]
 }
 
 async function refundUnclaimedTip(unclaimedTip: UnclaimedTip): Promise<void> {
+  console.log(`refund unclaimed tip => id: ${unclaimedTip.id}, timeoutDate: ${unclaimedTip.timeoutDate}, now: ${Date.now()}`);
+
   const recipientAccountId = unclaimedTip.recipients[0].accountId;
 
   try {
@@ -284,9 +292,11 @@ async function refundUnclaimedTip(unclaimedTip: UnclaimedTip): Promise<void> {
 
     promisses.push(refundDocRef.set(refundTx));
 
-    // delete unclaimed tip from recipient's transaction history
+    // delete unclaimed tip from original recipient's transaction history
+    console.log(`delete original sender's tip transaction doc => account id: ${unclaimedTip.recipients[0].accountId}, accountTransferId: ${unclaimedTip.id}`);
+
     const snapshot = await admin.firestore()
-                      .collection(`account/${recipientAccountId}/transactions`)
+                      .collection(`accounts/${unclaimedTip.recipients[0].accountId}/transactions`)
                       .where('accountTransferId', '==', unclaimedTip.id)
                       .get();
 

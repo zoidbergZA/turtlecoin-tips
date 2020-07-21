@@ -3,6 +3,7 @@ import { TrtlApp, Account, ServiceError, Transfer, WithdrawalPreview } from 'trt
 import { AppError } from './appError';
 import { Octokit } from '@octokit/rest';
 import { AppUser, AppConfig, UnclaimedTip, GithubUser } from './types';
+import { DocumentData, Query } from '@google-cloud/firestore';
 
 const octokit = new Octokit({});
 
@@ -181,18 +182,19 @@ export async function createUnclaimedTipDoc(
 }
 
 export async function getUnclaimedTips(githubId?: number, expired: boolean = false): Promise<UnclaimedTip[]> {
-  const query = admin.firestore().collection('unclaimed_tips');
+  let query: Query<DocumentData> = admin.firestore().collection('unclaimed_tips');
+  const now = Date.now();
 
   if (githubId) {
-    query.where('recipientGithubId', '==', githubId);
+    query = query.where('recipientGithubId', '==', githubId);
   }
 
   if (expired) {
-    query.where('timeoutDate', '<', Date.now());
+    query = query.where('timeoutDate', '<', now);
   }
 
   const snapshot = await query.get();
-  return snapshot.docs.map(d => d.data() as UnclaimedTip);
+  return snapshot.docs.map((d: any) => d.data() as UnclaimedTip);
 }
 
 export async function deleteUnclaimedTips(tipIds: string[]): Promise<boolean> {

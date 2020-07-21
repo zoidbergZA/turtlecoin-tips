@@ -33,8 +33,8 @@ const TopNav = () => {
           <Navbar.Item renderAs="p">
             {currentUser.username}
           </Navbar.Item>
-          <Navbar.Item>
-            <Icon onClick={() => app.auth().signOut()}>
+          <Navbar.Item onClick={() => app.auth().signOut()}>
+            <Icon>
               <FontAwesomeIcon icon={faLock} />
             </Icon>
             <span>lock</span>

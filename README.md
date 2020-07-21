@@ -22,7 +22,7 @@ firebase functions:config:set probot.private_key="YOUR PRIVATE KEY"
 firebase functions:config:set trtl.app_id="YOUR TRTL APP ID"
 firebase functions:config:set trtl.app_secret="YOUR TRTL APP SECRET"
 
-# Set the frontend url variable:
+# Set the frontend app url variable:
 firebase functions:config:set frontend.url="https://example.com"
 ```
 

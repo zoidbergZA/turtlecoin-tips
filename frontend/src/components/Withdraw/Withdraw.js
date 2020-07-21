@@ -6,7 +6,6 @@ import * as Form from 'react-bulma-components/lib/components/form';
 import Section from 'react-bulma-components/lib/components/section';
 import Container from 'react-bulma-components/lib/components/container';
 import Button from 'react-bulma-components/lib/components/button';
-import Box from 'react-bulma-components/lib/components/box';
 import Heading from 'react-bulma-components/lib/components/heading';
 import Level from 'react-bulma-components/lib/components/level';
 import Spinner from '../Spinner/Spinner';

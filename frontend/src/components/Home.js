@@ -10,7 +10,7 @@ const Home = () => {
   if (turtleAccount) {
     accountView = <AccountOverview {...turtleAccount} />
   } else {
-    accountView = <p>loading...</p>
+    accountView = null;
   }
 
   return (

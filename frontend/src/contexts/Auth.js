@@ -4,6 +4,7 @@ import { authState } from 'rxfire/auth';
 import { doc } from 'rxfire/firestore';
 import { map, switchMap } from 'rxjs/operators'
 import { from } from 'rxjs';
+import Spinner from 'components/Spinner/Spinner';
 
 export const AuthContext = React.createContext();
 
@@ -31,7 +32,11 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   if (pending) {
-    return <React.Fragment></React.Fragment>
+    return (
+      <div style={{  paddingTop: "200px" }}>
+        <Spinner />
+      </div>
+    )
   }
 
   return (

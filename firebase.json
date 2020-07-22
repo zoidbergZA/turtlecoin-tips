@@ -11,7 +11,7 @@
   },
   "hosting": {
     "site": "github-tipbot",
-    "public": "frontend/public",
+    "public": "frontend/build",
     "ignore": [
       "firebase.json",
       "**/.*",

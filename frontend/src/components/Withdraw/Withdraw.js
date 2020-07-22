@@ -161,7 +161,7 @@ const Withdraw = () => {
               {errors.FirstName && "This field is required"}
             </Form.Help>
           </Form.Field>
-          <Form.Field>
+          <Form.Field style={{ maxWidth: "400px", display: "inline-block" }}>
             <label>Amount</label>
             <Form.Control>
               <Controller

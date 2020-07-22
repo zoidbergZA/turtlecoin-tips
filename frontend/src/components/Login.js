@@ -15,7 +15,7 @@ const Login = ({ history }) => {
   const loginClickHandler = () => {
     var provider = new firebase.auth.GithubAuthProvider();
 
-    app.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(() => {
+    app.auth().setPersistence(firebase.auth.Auth.Persistence.NONE).then(() => {
       app.auth().signInWithRedirect(provider).then(function(result) {
         history.push('/');
       }).catch(function(error) {

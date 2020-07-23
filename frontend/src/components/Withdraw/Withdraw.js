@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
+import styles from './withdraw.module.scss';
 import { Link } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
-import './withdraw.scss';
 import * as Form from 'react-bulma-components/lib/components/form';
 import Section from 'react-bulma-components/lib/components/section';
 import Container from 'react-bulma-components/lib/components/container';
@@ -85,7 +85,7 @@ const Withdraw = () => {
           <Section>
             <Button to="/" renderAs={Link}>
               <FontAwesomeIcon icon={faCheck}></FontAwesomeIcon>
-              <span className="btn-icon-text">done</span>
+              <span className={styles["btn-icon-text"]}>done</span>
             </Button>
           </Section>
           </Container>
@@ -101,16 +101,16 @@ const Withdraw = () => {
         <Container>
           <Heading>Confirm send</Heading>
           <p className="address-text">{preparedTx.address}</p>
-          <div className="amounts-box">
+          <div className={styles["amounts-box"]}>
             <table>
             <tbody>
               <tr>
-                <td className="tbl-label">amount:</td>
-                <td className="tbl-value">{preparedTx.amount / 100} TRTL</td>
+                <td className={styles["tbl-label"]}>amount:</td>
+                <td className={styles["tbl-value"]}>{preparedTx.amount / 100} TRTL</td>
               </tr>
               <tr>
-                <td className="tbl-label">fee:</td>
-                <td className="tbl-value">{fees / 100} TRTL</td>
+                <td className={styles["tbl-label"]}>fee:</td>
+                <td className={styles["tbl-value"]}>{fees / 100} TRTL</td>
               </tr>
             </tbody>
           </table>
@@ -120,13 +120,13 @@ const Withdraw = () => {
               <Level.Item type="left">
                 <Button onClick={onBack}>
                   <FontAwesomeIcon icon={faChevronLeft}></FontAwesomeIcon>
-                  <span className="btn-icon-text">back</span>
+                  <span className={styles["btn-icon-text"]}>back</span>
                 </Button>
               </Level.Item>
               <Level.Item type="right">
                 <Button onClick={onConfirm} color="primary">
                   <FontAwesomeIcon icon={faPaperPlane}></FontAwesomeIcon>
-                  <span className="btn-icon-text">confirm</span>
+                  <span className={styles["btn-icon-text"]}>confirm</span>
                 </Button>
               </Level.Item>
             </Level>
@@ -180,7 +180,7 @@ const Withdraw = () => {
             <Level.Item type="left">
               <Button to="/" renderAs={Link}>
                 <FontAwesomeIcon icon={faChevronLeft}></FontAwesomeIcon>
-                <span className="btn-icon-text">back</span>
+                <span className={styles["btn-icon-text"]}>back</span>
               </Button>
             </Level.Item>
             <Level.Item type="right">
@@ -192,7 +192,7 @@ const Withdraw = () => {
                 disabled={!formState.isValid}
               >
                 <FontAwesomeIcon icon={faChevronRight}></FontAwesomeIcon>
-                <span className="btn-icon-text">continue</span>
+                <span className={styles["btn-icon-text"]}>continue</span>
               </Button>
             </Form.Control>
             </Level.Item>

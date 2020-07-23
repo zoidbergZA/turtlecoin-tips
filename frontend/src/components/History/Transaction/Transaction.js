@@ -1,12 +1,12 @@
 import React from 'react';
-import './Transaction.scss';
+import styles from './Transaction.module.scss';
 
 const Transaction = ({ tx }) => {
   return (
-    <tr>
-      <td className="date-text">{convertTimestamp(tx.timestamp)}</td>
+    <tr className={styles.text}>
+      <td className={styles.date}>{convertTimestamp(tx.timestamp)}</td>
       <td>{tx.transferType}</td>
-      <td><div className="info-text">{getInfoText(tx)}</div></td>
+      <td><div className={styles.info}>{getInfoText(tx)}</div></td>
       <td>{getAmountText(tx)}</td>
     </tr>
   );

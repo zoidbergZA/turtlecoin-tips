@@ -357,7 +357,7 @@ async function prepareWithdrawToAddress(
     return [undefined, (error as AppError)];
   }
 
-  const docRef = admin.firestore().doc(`users/${userId}/preparedWithdrawals/${preview.id}`);
+  const docRef = admin.firestore().doc(`users/${userId}/prepared_withdrawals/${preview.id}`);
   await docRef.create(preview);
 
   return [preview, undefined];

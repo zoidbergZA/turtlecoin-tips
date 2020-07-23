@@ -44,7 +44,7 @@ export async function getAppUserByGithubId(githubId: number): Promise<[AppUser |
 }
 
 export async function getGithubUser(githubId: number): Promise<[GithubUser | undefined, undefined | AppError]> {
-  const snapshot = await admin.firestore().doc(`github_users/${githubId}`).get();
+  const snapshot = await admin.firestore().doc(`platforms/github/users/${githubId}`).get();
 
   if (snapshot.exists) {
     return [snapshot.data() as GithubUser, undefined];
@@ -100,7 +100,7 @@ export async function createGithubUser(githubId: number): Promise<[GithubUser | 
     const batch = admin.firestore().batch();
 
     batch.create(admin.firestore().doc(`accounts/${account.id}`), account);
-    batch.create(admin.firestore().doc(`github_users/${githubId}`), githubUser);
+    batch.create(admin.firestore().doc(`platforms/github/users/${githubId}`), githubUser);
 
     await batch.commit();
 
@@ -140,7 +140,7 @@ export async function getPreparedWithdrawal(
   userId: string,
   preparedWithdrawalId: string
 ): Promise<WithdrawalPreview | null> {
-  const snapshot = await admin.firestore().doc(`users/${userId}/preparedWithdrawals/${preparedWithdrawalId}`).get();
+  const snapshot = await admin.firestore().doc(`users/${userId}/prepared_withdrawals/${preparedWithdrawalId}`).get();
 
   if (snapshot.exists) {
     return snapshot.data() as WithdrawalPreview;

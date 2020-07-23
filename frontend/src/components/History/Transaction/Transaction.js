@@ -18,7 +18,10 @@ function getInfoText(tx) {
     case 'withdrawal':
       return tx.txHash;
     case 'tip':
-      return `to @${tx.recipientUsername}`;
+      if (tx.amount > 0)
+      return `from @${tx.senderUsername}`;
+      else
+        return `to @${tx.recipientUsername}`;
     case 'tipRefund':
       return `from @${tx.senderUsername}`;
     default:
@@ -27,11 +30,7 @@ function getInfoText(tx) {
 }
 
 function getAmountText(tx) {
-  let prefix = '-';
-
-  if (tx.transferType === 'deposit' || tx.transferType === 'tipRefund') {
-    prefix = '+';
-  }
+  let prefix = tx.amount < 0 ? '' : '+';
 
   const amount = `${((tx.amount + tx.fee) / 100).toFixed(2)} TRTL`
 

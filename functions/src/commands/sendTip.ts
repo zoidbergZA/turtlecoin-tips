@@ -113,7 +113,7 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
     githubId:           sendingUser.githubId,
     timestamp:          transfer.timestamp,
     transferType:       'tip',
-    amount:             tipCommand.amount,
+    amount:             -tipCommand.amount,
     fee:                0,
     status:             'completed',
     accountTransferId:  transfer.id,

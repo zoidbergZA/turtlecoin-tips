@@ -5,7 +5,7 @@ import 'firebase/functions';
 
 const config = {
   apiKey: "AIzaSyBmXrykxhR06_o1F4VqQLjfiITh1x2XgUU",
-  authDomain: "github-tipbot.firebaseapp.com",
+  authDomain: "turtlecoin.tips",
   databaseURL: "https://github-tipbot.firebaseio.com",
   projectId: "github-tipbot",
   storageBucket: "github-tipbot.appspot.com",

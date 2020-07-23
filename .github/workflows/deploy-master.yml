@@ -22,8 +22,9 @@ jobs:
       - name: build react app
         working-directory: ./frontend
         run: yarn build
-      - uses: w9jds/firebase-action@master
+      - name: deploy react app
+        uses: w9jds/firebase-action@master
         with:
-          args: deploy
+          args: deploy -P github-tipbot
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}

@@ -1,0 +1,29 @@
+# This workflow will build and deploy on pushes to the master branch
+
+name: deploy-master
+on:
+  push:
+    branches:
+      - master
+jobs:
+  firebase-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@master
+        with:
+          node-version: '10.x'
+      - name: install cloud functions dependencies
+        working-directory: ./functions
+        run: npm install
+      - name: install react dependecies
+        working-directory: ./frontend
+        run: npm install
+      - name: build react app
+        working-directory: ./frontend
+        run: yarn build
+      - uses: w9jds/firebase-action@master
+        with:
+          args: deploy
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}

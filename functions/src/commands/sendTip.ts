@@ -202,14 +202,16 @@ function getTipAmount(text: string): number | undefined {
   }
 
   // get 2nd word in text
-  const amount = parseFloat(words[1]);
+  let amount = parseFloat(words[1]);
 
   if (amount === NaN) {
     return undefined;
   }
 
+  amount = Math.ceil(amount * 100);
+
   // convert to atomic units
-  return amount * 100;
+  return amount;
 }
 
 function getMentions(text: string): string[] {

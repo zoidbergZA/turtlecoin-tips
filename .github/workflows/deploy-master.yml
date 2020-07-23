@@ -22,7 +22,7 @@ jobs:
       - name: build react app
         working-directory: ./frontend
         run: yarn build
-      - name: deploy react app
+      - name: deploy to firebase
         uses: w9jds/firebase-action@master
         with:
           args: deploy -P github-tipbot

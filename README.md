@@ -1,6 +1,6 @@
-# github-tipbot
+# TurtleCoin Tips
 
-A TurtleCoin tipbot for Github built with [Probot](https://github.com/probot/probot)
+A TurtleCoin tips service.
 
 ## Setup
 
@@ -13,7 +13,7 @@ Set a property named `tipTimeoutDays` (number) to the amount of days an unclaime
 ### Configure firebase environment variables
 
 ```sh
-# Set the following probot variables:
+# Set the following Github probot variables:
 firebase functions:config:set probot.app_id="YOUR GITHUB APP ID"
 firebase functions:config:set probot.webhook_secret="YOUR WEBHOOK SECRET"
 firebase functions:config:set probot.private_key="YOUR PRIVATE KEY"
@@ -34,13 +34,15 @@ The backend code is located in the `/functions` folder.
 
 ## CI/CD
 
-TODO: gh-actions instructions.
+The project uses Github actions to build and deploy on pushes to the `master` branch. This requires to following Github secret to be set in `settings -> secrets`:
+
+key: `FIREBASE_TOKEN`
+
+value: `YOUR_FIREBASE_TOKEN` (run firebase login:ci in the project folder to get your token)
 
 ## Contributing
 
 If you have suggestions for how github-tipbot could be improved, or want to report a bug, open an issue! We'd love all and any contributions.
-
-For more, check out the [Contributing Guide](CONTRIBUTING.md).
 
 ## License
 

@@ -167,7 +167,7 @@ const Withdraw = () => {
               <Controller
                 as={Form.Input}
                 name="amount"
-                type="number"
+
                 control={control}
                 defaultValue=""
                 placeholder="0.00"

@@ -70,37 +70,56 @@ exports.onNewAuthUserCreated = functions.auth.user().onCreate(async (user) => {
   console.log(`user provider data: ${JSON.stringify(user.providerData)}`);
 
   const githubInfo = user.providerData[0];
+  let username = githubInfo.displayName || githubInfo.email;
+
+  if (!username) {
+    username = 'new user';
+  }
 
   const appUser: AppUser = {
     uid: user.uid,
-    username: githubInfo.displayName,
+    username: username,
     githubId: Number.parseInt(githubInfo.uid)
   }
 
-  if (appUser.githubId) {
-    const [account] = await db.getTurtleAccount(appUser.githubId);
-
-    if (account) {
-      appUser.accountId = account.id;
-
-      // if the new user already has a tips account, cancel all unclaimed tips.
-      const tips = await db.getUnclaimedTips(appUser.githubId);
-
-      if (tips.length > 0) {
-        await db.deleteUnclaimedTips(tips.map(t => t.id));
-      }
-    } else {
-      const [githubUser, userError] = await db.createGithubUser(appUser.githubId);
-
-      if (githubUser) {
-        appUser.accountId = githubUser.accountId;
-      } else {
-        console.log(`error creating account for app user [${appUser.uid}]: ${(userError as AppError).message}`);
-      }
-    }
+  try {
+    await admin.firestore().doc(`users/${appUser.uid}`).set(appUser);
+  } catch (error) {
+    console.log(error);
+    console.log('aborting new user creation!');
+    return;
   }
 
-  await admin.firestore().doc(`users/${appUser.uid}`).set(appUser);
+  const [account] = await db.getTurtleAccount(appUser.githubId);
+
+  if (account) {
+    appUser.accountId = account.id;
+
+    await admin.firestore().doc(`users/${appUser.uid}`).update({
+      accountId: account.id
+    });
+
+    console.log(`associated account [${account.id}] with user [${appUser.uid}].`);
+
+    // if the new user already has a tips account, cancel all unclaimed tips.
+    const tips = await db.getUnclaimedTips(appUser.githubId);
+
+    if (tips.length > 0) {
+      await db.deleteUnclaimedTips(tips.map(t => t.id));
+    }
+  } else {
+    const [githubUser, userError] = await db.createGithubUser(appUser.githubId);
+
+    if (githubUser) {
+      await admin.firestore().doc(`users/${appUser.uid}`).update({
+        accountId: githubUser.accountId
+      });
+
+      console.log(`associated account [${githubUser.accountId}] with user [${appUser.uid}].`);
+    } else {
+      console.log(`error creating account for app user [${appUser.uid}]: ${(userError as AppError).message}`);
+    }
+  }
 });
 
 export const userPrepareWithdrawal = functions.https.onCall(async (data, context) => {

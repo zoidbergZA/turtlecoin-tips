@@ -12,6 +12,8 @@ import { faGithub } from '@fortawesome/free-brands-svg-icons';
 import logo from '../assets/logo-large.png';
 
 const Login = ({ history }) => {
+  const { currentUser } = useContext(AuthContext);
+
   const loginClickHandler = () => {
     var provider = new firebase.auth.GithubAuthProvider();
 
@@ -19,15 +21,10 @@ const Login = ({ history }) => {
       app.auth().signInWithRedirect(provider).then(function(result) {
         history.push('/');
       }).catch(function(error) {
-        var errorCode = error.code;
-        var errorMessage = error.message;
-
-        console.log(`${errorCode} :: ${errorMessage}`);
+        console.error(`${error.errorCode} :: ${error.errorMessage}`);
       });
     });
   }
-
-  const { currentUser } = useContext(AuthContext);
 
   if (currentUser) {
     return <Redirect to="/" />;

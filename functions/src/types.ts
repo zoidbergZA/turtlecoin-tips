@@ -31,6 +31,8 @@ export interface UnclaimedTip extends Transfer {
   senderUsername: string;
 }
 
+export type Platform = 'github';
+
 export type TransactionType = 'deposit' | 'withdrawal' | 'tip' | 'tipRefund';
 export type TransactionStatus = 'confirming' | 'completed' | 'failed';
 
@@ -38,6 +40,7 @@ export interface Transaction {
   id: string;
   userId?: string;
   accountId: string;
+  platform?: Platform;
   githubId?: number,
   timestamp: number;
   transferType: TransactionType;

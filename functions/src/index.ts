@@ -299,6 +299,7 @@ async function refundUnclaimedTip(unclaimedTip: UnclaimedTip): Promise<void> {
     const refundTx: Transaction = {
       id:                 refundDocRef.id,
       accountId:          recipientAccountId,
+      platform:           'github',
       timestamp:          transfer.timestamp,
       transferType:       'tipRefund',
       amount:             transfer.recipients[0].amount,

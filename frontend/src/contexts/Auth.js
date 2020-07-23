@@ -25,9 +25,12 @@ export const AuthProvider = ({ children }) => {
         }
       }),
       map(userDoc => userDoc.data())
-    ).subscribe(user => {
-      setCurrentUser(user);
-      setPending(false);
+    ).subscribe(userDoc => {
+      setCurrentUser(userDoc);
+
+      if (userDoc) {
+        setPending(false);
+      }
     });
   }, []);
 

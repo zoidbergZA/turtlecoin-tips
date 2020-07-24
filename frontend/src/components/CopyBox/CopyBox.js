@@ -11,15 +11,10 @@ const CopyBox = ({ data }) => {
 
   const copyAddressHandler = () => {
     setCopied(true);
-
-    timerRef.current = setTimeout(() => {
-      setCopied(false);
-    }, 2000);
+    timerRef.current = setTimeout(() => setCopied(false), 2000);
   }
 
-  useEffect(() => {
-    return () => clearTimeout(timerRef.current)
-  }, []);
+  useEffect(() => () => clearTimeout(timerRef.current), []);
 
   const iconStyles = copied ? [styles.green] : [];
 

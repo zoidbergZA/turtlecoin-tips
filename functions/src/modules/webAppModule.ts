@@ -10,7 +10,7 @@ export const onNewAuthUserCreated = functions.auth.user().onCreate(async (user) 
   console.log(`creating new user => uid: ${user.uid}`);
   console.log(`user provider data: ${JSON.stringify(user.providerData)}`);
 
-  if (user.providerData.some(p => p.providerId === 'github')) {
+  if (user.providerData.some(p => p.providerId === 'github.com')) {
     await onNewGithubUser(user);
   } else {
     console.log(`unsupported provider: ${JSON.stringify(user.providerData)}, deleting auth user [${user.uid}]...`);

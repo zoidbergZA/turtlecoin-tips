@@ -16,7 +16,7 @@ export const botWebhook = functions.https.onRequest(async (request: Request, res
 });
 
 export async function onNewGithubUser(user: admin.auth.UserRecord): Promise<void> {
-  const provider = user.providerData.find(p => p.providerId === 'github');
+  const provider = user.providerData.find(p => p.providerId === 'github.com');
 
   if (!provider) {
     console.log(`invalid github provider: ${JSON.stringify(user.providerData)}, deleting auth user [${user.uid}]...`);

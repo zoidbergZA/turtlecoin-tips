@@ -27,6 +27,7 @@ export async function onAuthUserCreated(user: admin.auth.UserRecord): Promise<vo
     return;
   }
 
+  const githubId = Number.parseInt(provider.uid);
   let username = provider.displayName || provider.email;
 
   if (!username) {
@@ -36,7 +37,7 @@ export async function onAuthUserCreated(user: admin.auth.UserRecord): Promise<vo
   const appUser: WebAppUser = {
     uid: user.uid,
     username: username,
-    githubId: Number.parseInt(provider.uid)
+    githubId: githubId
   }
 
   try {
@@ -47,7 +48,7 @@ export async function onAuthUserCreated(user: admin.auth.UserRecord): Promise<vo
     return;
   }
 
-  const [existingGithubUser] = await getGithubUser(appUser.githubId);
+  const [existingGithubUser] = await getGithubUser(githubId);
 
   if (existingGithubUser) {
     appUser.accountId = existingGithubUser.accountId;
@@ -65,7 +66,7 @@ export async function onAuthUserCreated(user: admin.auth.UserRecord): Promise<vo
       await deleteUnclaimedTips(tips.map(t => t.id));
     }
   } else {
-    const [githubUser, userError] = await createGithubUser(appUser.githubId);
+    const [githubUser, userError] = await createGithubUser(githubId);
 
     if (githubUser) {
       await admin.firestore().doc(`users/${appUser.uid}`).update({

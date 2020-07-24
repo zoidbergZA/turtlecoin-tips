@@ -6,7 +6,7 @@ export interface Config {
 
 export interface WebAppUser {
   uid: string;
-  githubId: number;
+  githubId?: number;
   accountId?: string;
   username: string;
 }

@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
-import { TrtlApp, Account, ServiceError, Transfer, WithdrawalPreview } from 'trtl-apps';
+import { TrtlApp, Account, ServiceError, WithdrawalPreview } from 'trtl-apps';
 import { AppError } from './appError';
-import { WebAppUser, Config, UnclaimedTip } from './types';
+import { WebAppUser, Config } from './types';
 
 export async function getAppUserByUid(uid: string): Promise<[WebAppUser | undefined, undefined | AppError]> {
   const snapshot = await admin.firestore().doc(`users/${uid}`).get();
@@ -59,38 +59,6 @@ export async function getPreparedWithdrawal(
     return snapshot.data() as WithdrawalPreview;
   } else {
     return null;
-  }
-}
-
-export async function createUnclaimedTipDoc(
-  transfer: Transfer,
-  timeoutDays: number,
-  senderUsername: string,
-  recipientUsername: string,
-  recipientGithubId: number
-): Promise<[UnclaimedTip | undefined, undefined | AppError]> {
-  if (timeoutDays < 1) {
-    return [undefined, new AppError('app/unclaimed-tip', `Invalid tip timout days param [${timeoutDays}], must value be > 0.`)];
-  }
-
-  try {
-    const unclaimedTip: UnclaimedTip = {
-      id:           transfer.id,
-      appId:        transfer.appId,
-      senderId:     transfer.senderId,
-      recipients:   transfer.recipients,
-      timestamp:    transfer.timestamp,
-      timeoutDate:  transfer.timestamp + (timeoutDays * 24 * 60 * 60 * 1000),
-      timeoutDays,
-      recipientGithubId,
-      senderUsername,
-      recipientUsername
-    }
-
-    await admin.firestore().doc(`unclaimed_tips/${transfer.id}`).set(unclaimedTip);
-    return [unclaimedTip, undefined];
-  } catch (error) {
-    return [undefined, new AppError('app/unclaimed-tip', error)];
   }
 }
 

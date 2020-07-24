@@ -4,7 +4,7 @@ import { TrtlApp, ServiceError, Account } from 'trtl-apps';
 import { Application } from 'probot'
 import Webhooks from '@octokit/webhooks';
 import { getGithubIdByUsername, getWebAppUserByGithubId,
-  getGithubUser, createGithubUser } from '../githubModule';
+  getGithubUser, createGithubUser, createUnclaimedTipDoc } from '../githubModule';
 import { TipCommandInfo, Transaction } from '../../../types';
 import { AppError } from '../../../appError';
 import * as db from '../../../database';
@@ -155,7 +155,7 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
     response += `\n\n @${tipCommand.recipientUsername} you have not linked a tips account yet, visit ${frontendUrl} to activate your account.`;
 
     if (config.githubTipTimeoutDays > 0) {
-      const [doc, tipError] = await db.createUnclaimedTipDoc(
+      const [doc, tipError] = await createUnclaimedTipDoc(
                                 transfer,
                                 config.githubTipTimeoutDays,
                                 tipCommand.senderUsername,

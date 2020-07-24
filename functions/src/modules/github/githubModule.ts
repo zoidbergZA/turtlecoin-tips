@@ -8,7 +8,7 @@ import { Octokit } from '@octokit/rest';
 import { Request, Response } from 'express';
 import { AppError } from '../../appError';
 import { WebAppUser, UnclaimedTip, Transaction, GithubUser } from '../../types';
-import { TrtlApp, ServiceError } from 'trtl-apps';
+import { TrtlApp, ServiceError, Transfer } from 'trtl-apps';
 
 const octokit = new Octokit({});
 
@@ -142,6 +142,38 @@ export async function getGithubIdByUsername(username: string): Promise<[number |
   }
 }
 
+export async function createUnclaimedTipDoc(
+  transfer: Transfer,
+  timeoutDays: number,
+  senderUsername: string,
+  recipientUsername: string,
+  recipientGithubId: number
+): Promise<[UnclaimedTip | undefined, undefined | AppError]> {
+  if (timeoutDays < 1) {
+    return [undefined, new AppError('app/unclaimed-tip', `Invalid tip timout days param [${timeoutDays}], must value be > 0.`)];
+  }
+
+  try {
+    const unclaimedTip: UnclaimedTip = {
+      id:           transfer.id,
+      appId:        transfer.appId,
+      senderId:     transfer.senderId,
+      recipients:   transfer.recipients,
+      timestamp:    transfer.timestamp,
+      timeoutDate:  transfer.timestamp + (timeoutDays * 24 * 60 * 60 * 1000),
+      timeoutDays,
+      recipientGithubId,
+      senderUsername,
+      recipientUsername
+    }
+
+    await admin.firestore().doc(`platforms/github/unclaimed_tips/${transfer.id}`).set(unclaimedTip);
+    return [unclaimedTip, undefined];
+  } catch (error) {
+    return [undefined, new AppError('app/unclaimed-tip', error)];
+  }
+}
+
 export const refundUnclaimedTips = functions.pubsub.schedule('every 2 hours').onRun(async (context) => {
   const expiredTips = await getUnclaimedTips(undefined, true);
 
@@ -169,7 +201,7 @@ export const refundUnclaimedTips = functions.pubsub.schedule('every 2 hours').on
 });
 
 async function getUnclaimedTips(githubId?: number, expired: boolean = false): Promise<UnclaimedTip[]> {
-  let query: Query<DocumentData> = admin.firestore().collection('unclaimed_tips');
+  let query: Query<DocumentData> = admin.firestore().collection('platforms/github/unclaimed_tips');
   const now = Date.now();
 
   if (githubId) {
@@ -189,7 +221,7 @@ async function deleteUnclaimedTips(tipIds: string[]): Promise<boolean> {
     const batch = admin.firestore().batch();
 
     tipIds.forEach(id => {
-      batch.delete(admin.firestore().doc(`unclaimed_tips/${id}`));
+      batch.delete(admin.firestore().doc(`platforms/github/unclaimed_tips/${id}`));
     });
 
     await batch.commit();
@@ -220,7 +252,7 @@ async function refundUnclaimedTip(unclaimedTip: UnclaimedTip): Promise<void> {
 
   try {
     const transfer = await admin.firestore().runTransaction(async (txn) => {
-      const unclaimedTipRef = admin.firestore().doc(`unclaimed_tips/${unclaimedTip.id}`);
+      const unclaimedTipRef = admin.firestore().doc(`platforms/github/unclaimed_tips/${unclaimedTip.id}`);
       txn.delete(unclaimedTipRef);
 
       // send back the original tip

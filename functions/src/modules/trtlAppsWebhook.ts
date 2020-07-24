@@ -1,16 +1,45 @@
-import admin = require("firebase-admin");
+import * as admin from 'firebase-admin';
+import * as functions from 'firebase-functions';
+import * as db from '../database';
+import * as crypto from 'crypto';
 import { Withdrawal, Deposit } from "trtl-apps";
-import * as db from './database';
-import { AppError } from "./appError";
-import { Transaction } from "./types";
+import { AppError } from "../appError";
+import { Transaction } from "../types";
 
-export type CallbackCode =  'deposit/confirming'      |
-                            'deposit/succeeded'       |
-                            'deposit/cancelled'       |
-                            'withdrawal/succeeded'    |
-                            'withdrawal/failed'
+type CallbackCode =   'deposit/confirming'      |
+                      'deposit/succeeded'       |
+                      'deposit/cancelled'       |
+                      'withdrawal/succeeded'    |
+                      'withdrawal/failed'
 
-export async function processWebhookCall(requestBody: any): Promise<void> {
+const turtleConfig = functions.config().trtl;
+
+export const webhook = functions.https.onRequest(async (request: functions.https.Request, response: functions.Response) => {
+  if (!validateWebhookCall(request)) {
+    response.status(403).send('Unauthorized.');
+    return;
+  }
+
+  await processWebhookCall(request.body);
+  response.status(200).send('OK');
+});
+
+function validateWebhookCall(request: functions.https.Request): boolean {
+  const requestSignature = request.get('x-trtl-apps-signature');
+
+  if (!requestSignature) {
+    return false;
+  }
+
+  const hash = 'sha256=' + crypto
+                .createHmac("sha256", turtleConfig.app_secret)
+                .update(JSON.stringify(request.body))
+                .digest("hex");
+
+  return hash === requestSignature;
+}
+
+async function processWebhookCall(requestBody: any): Promise<void> {
   const code: CallbackCode | undefined = requestBody.code;
   const data: any = requestBody.data;
 

@@ -1,5 +1,5 @@
 import * as functions from 'firebase-functions';
-import * as SendTipCommand from '../github/sendTip';
+import * as SendTipCommand from './sendTip';
 import { Request, Response } from 'express';
 import { createProbot, Options } from 'probot'
 

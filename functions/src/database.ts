@@ -7,7 +7,7 @@ import { DocumentData, Query } from '@google-cloud/firestore';
 
 const octokit = new Octokit({});
 
-// TODO: refactor to other module (Utils?)
+// TODO: refactor to other GithubModule
 export async function getGithubIdByUsername(username: string): Promise<[number | undefined, undefined | AppError]> {
   try {
     const response = await octokit.users.getByUsername({
@@ -31,6 +31,7 @@ export async function getAppUserByUid(uid: string): Promise<[AppUser | undefined
   }
 }
 
+// TODO: refactor to other GithubModule
 export async function getAppUserByGithubId(githubId: number): Promise<[AppUser | undefined, undefined | AppError]> {
   const snapshot = await admin.firestore().collection(`users`)
                     .where('githubId', '==', githubId)
@@ -43,6 +44,7 @@ export async function getAppUserByGithubId(githubId: number): Promise<[AppUser |
   return [snapshot.docs[0].data() as AppUser, undefined];
 }
 
+// TODO: refactor to other GithubModule
 export async function getGithubUser(githubId: number): Promise<[GithubUser | undefined, undefined | AppError]> {
   const snapshot = await admin.firestore().doc(`platforms/github/users/${githubId}`).get();
 
@@ -63,6 +65,7 @@ export async function getAccount(id: string): Promise<[Account | undefined, unde
   }
 }
 
+// TODO: refactor to other GithubModule
 export async function createGithubUser(githubId: number): Promise<[GithubUser | undefined, undefined | AppError]> {
   // TODO: check if this githubId already has a turtle account before creating a new one
 

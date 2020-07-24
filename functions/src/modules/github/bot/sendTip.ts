@@ -3,9 +3,9 @@ import * as functions from 'firebase-functions';
 import { TrtlApp, ServiceError, Account } from 'trtl-apps';
 import { Application } from 'probot'
 import Webhooks from '@octokit/webhooks';
-import { TipCommandInfo, Transaction } from '../../types';
-import { AppError } from '../../appError';
-import * as db from '../../database';
+import { TipCommandInfo, Transaction } from '../../../types';
+import { AppError } from '../../../appError';
+import * as db from '../../../database';
 
 const frontendUrl = functions.config().frontend.url;
 

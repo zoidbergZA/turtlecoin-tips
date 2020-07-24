@@ -27,7 +27,7 @@ const Withdraw = () => {
     setBusyMessage('preparing transaction...');
 
     try {
-      const prepareWithdrawal = app.functions().httpsCallable('userPrepareWithdrawal');
+      const prepareWithdrawal = app.functions().httpsCallable('webApp-userPrepareWithdrawal');
       const prepareResult = await prepareWithdrawal({
         address: data.address,
         amount: Math.ceil(data.amount * 100)
@@ -45,7 +45,7 @@ const Withdraw = () => {
     setBusyMessage('sending transaction...');
 
     try {
-      const sendWithdrawal = app.functions().httpsCallable('userWithdraw');
+      const sendWithdrawal = app.functions().httpsCallable('webApp-userWithdraw');
       const sendResult = await sendWithdrawal({ preparedTxId: preparedTx.id });
 
       setWithdrawal(sendResult.data);

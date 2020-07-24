@@ -5,7 +5,7 @@ import * as bot from './bot/bot';
 import groupBy from 'lodash.groupby';
 import { Request, Response } from 'express';
 import { AppError } from '../../appError';
-import { AppUser, UnclaimedTip, Transaction } from '../../types';
+import { WebAppUser, UnclaimedTip, Transaction } from '../../types';
 import { TrtlApp, ServiceError } from 'trtl-apps';
 
 /**
@@ -29,7 +29,7 @@ export async function onNewGithubUser(user: admin.auth.UserRecord): Promise<void
     username = 'new user';
   }
 
-  const appUser: AppUser = {
+  const appUser: WebAppUser = {
     uid: user.uid,
     username: username,
     githubId: Number.parseInt(provider.uid)

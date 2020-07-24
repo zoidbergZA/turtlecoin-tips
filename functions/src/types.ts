@@ -4,7 +4,7 @@ export interface AppConfig {
   tipTimeoutDays: number    // amount of days before unclaimed tips are refunded. < 1 days means no timeout
 }
 
-export interface AppUser {
+export interface WebAppUser {
   uid: string;
   githubId: number;
   accountId?: string;

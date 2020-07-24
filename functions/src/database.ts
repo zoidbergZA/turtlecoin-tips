@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import { TrtlApp, Account, ServiceError, Transfer, WithdrawalPreview } from 'trtl-apps';
 import { AppError } from './appError';
 import { Octokit } from '@octokit/rest';
-import { AppUser, AppConfig, UnclaimedTip, GithubUser } from './types';
+import { WebAppUser, AppConfig, UnclaimedTip, GithubUser } from './types';
 import { DocumentData, Query } from '@google-cloud/firestore';
 
 const octokit = new Octokit({});
@@ -21,18 +21,18 @@ export async function getGithubIdByUsername(username: string): Promise<[number |
   }
 }
 
-export async function getAppUserByUid(uid: string): Promise<[AppUser | undefined, undefined | AppError]> {
+export async function getAppUserByUid(uid: string): Promise<[WebAppUser | undefined, undefined | AppError]> {
   const snapshot = await admin.firestore().doc(`users/${uid}`).get();
 
   if (snapshot.exists) {
-    return [snapshot.data() as AppUser, undefined];
+    return [snapshot.data() as WebAppUser, undefined];
   } else {
     return [undefined, new AppError('app/user-not-found')];
   }
 }
 
 // TODO: refactor to other GithubModule
-export async function getAppUserByGithubId(githubId: number): Promise<[AppUser | undefined, undefined | AppError]> {
+export async function getAppUserByGithubId(githubId: number): Promise<[WebAppUser | undefined, undefined | AppError]> {
   const snapshot = await admin.firestore().collection(`users`)
                     .where('githubId', '==', githubId)
                     .get();
@@ -41,7 +41,7 @@ export async function getAppUserByGithubId(githubId: number): Promise<[AppUser |
     return [undefined, new AppError('app/user-no-account')];
 }
 
-  return [snapshot.docs[0].data() as AppUser, undefined];
+  return [snapshot.docs[0].data() as WebAppUser, undefined];
 }
 
 // TODO: refactor to other GithubModule
@@ -105,7 +105,7 @@ export async function refreshAccount(accountId: string): Promise<void> {
   await admin.firestore().doc(`accounts/${accountId}`).set(account);
 }
 
-export async function getAccountOwner(accountId: string): Promise<[AppUser | undefined, undefined | AppError]> {
+export async function getAccountOwner(accountId: string): Promise<[WebAppUser | undefined, undefined | AppError]> {
   console.log(`get AppUser by accountId: [${accountId}]...`);
 
   const snapshot = await admin.firestore()
@@ -117,7 +117,7 @@ export async function getAccountOwner(accountId: string): Promise<[AppUser | und
     return [undefined, new AppError('app/user-not-found')];
   }
 
-  return [snapshot.docs[0].data() as AppUser, undefined];
+  return [snapshot.docs[0].data() as WebAppUser, undefined];
 }
 
 export async function getPreparedWithdrawal(

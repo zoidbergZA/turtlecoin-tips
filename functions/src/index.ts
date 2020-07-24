@@ -2,16 +2,13 @@ import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import * as crypto from 'crypto';
 import * as db from './database';
-import * as SendTipCommand from './commands/sendTip';
-import { Request, Response } from 'express';
+import * as GithubModule from './platforms/github/githubModule';
 import { TrtlApp, ServiceError, WithdrawalPreview, Withdrawal } from 'trtl-apps';
-import { createProbot, Options } from 'probot'
-import { UnclaimedTip, AppUser, Transaction } from './types';
+import { UnclaimedTip, Transaction } from './types';
 import { AppError } from './appError';
 import { processWebhookCall } from './webhookModule';
 import groupBy from 'lodash.groupby';
 
-const probotConfig = functions.config().probot;
 const turtleConfig = functions.config().trtl;
 
 // Init Firebase
@@ -20,105 +17,18 @@ admin.initializeApp();
 // Init TRTL App
 TrtlApp.initialize(turtleConfig.app_id, turtleConfig.app_secret);
 
-const probotOptions: Options = {
-  id:     probotConfig.app_id,
-  secret: probotConfig.webhook_secret,
-  cert:   probotConfig.private_key.replace(/\\n/g, '\n'),
-}
-
-const bot = createProbot(probotOptions);
-
-bot.load(robot => {
-  SendTipCommand.initListeners(robot);
-});
-
-/**
- * Relay Github events to the bot
- */
-exports.bot = functions.https.onRequest(async (request: Request, response: Response) => {
-  const name = request.get('x-github-event') || request.get('X-GitHub-Event');
-  const id = request.get('x-github-delivery') || request.get('X-GitHub-Delivery');
-
-  if(name && id) {
-    try {
-      await bot.receive({
-        name,
-        id,
-        payload: request.body,
-        protocol: 'https',
-        host: request.hostname,
-        url: request.url
-      });
-      response.send({
-        statusCode: 200,
-        body: JSON.stringify({
-          message: 'Executed'
-        })
-      });
-    } catch(err) {
-      console.error(err);
-      response.sendStatus(500);
-    }
-  } else {
-    console.error(request);
-    response.sendStatus(400);
-  }
-});
+export const github = GithubModule;
 
 exports.onNewAuthUserCreated = functions.auth.user().onCreate(async (user) => {
   console.log(`creating new user => uid: ${user.uid}`);
   console.log(`user provider data: ${JSON.stringify(user.providerData)}`);
 
-  const githubInfo = user.providerData[0];
-  let username = githubInfo.displayName || githubInfo.email;
-
-  if (!username) {
-    username = 'new user';
-  }
-
-  const appUser: AppUser = {
-    uid: user.uid,
-    username: username,
-    githubId: Number.parseInt(githubInfo.uid)
-  }
-
-  try {
-    await admin.firestore().doc(`users/${appUser.uid}`).set(appUser);
-  } catch (error) {
-    console.log(error);
-    console.log('aborting new user creation!');
-    return;
-  }
-
-  const [account] = await db.getTurtleAccount(appUser.githubId);
-
-  if (account) {
-    appUser.accountId = account.id;
-
-    await admin.firestore().doc(`users/${appUser.uid}`).update({
-      accountId: account.id
-    });
-
-    console.log(`associated account [${account.id}] with user [${appUser.uid}].`);
-
-    // if the new user already has a tips account, cancel all unclaimed tips.
-    const tips = await db.getUnclaimedTips(appUser.githubId);
-
-    if (tips.length > 0) {
-      await db.deleteUnclaimedTips(tips.map(t => t.id));
-    }
+  if (user.providerData.some(p => p.providerId === 'github')) {
+    await GithubModule.onNewGithubUser(user);
   } else {
-    const [githubUser, userError] = await db.createGithubUser(appUser.githubId);
-
-    if (githubUser) {
-      await admin.firestore().doc(`users/${appUser.uid}`).update({
-        accountId: githubUser.accountId
-      });
-
-      console.log(`associated account [${githubUser.accountId}] with user [${appUser.uid}].`);
-    } else {
-      console.log(`error creating account for app user [${appUser.uid}]: ${(userError as AppError).message}`);
-    }
+    console.log(`unsupported provider: ${JSON.stringify(user.providerData)}, deleting auth user [${user.uid}]...`);
+    await admin.auth().deleteUser(user.uid);
+    return;
   }
 });
 
@@ -341,11 +251,11 @@ async function prepareWithdrawToAddress(
     return [undefined, userError];
   }
 
-  if (!appUser.githubId) {
-    return [undefined, new AppError('github/user-not-found')];
+  if (!appUser.accountId) {
+    return [undefined, new AppError('app/user-no-account', `app user ${appUser.uid} doesn't have a turtle account id assigned!`)];
   }
 
-  const [account, accountError] = await db.getTurtleAccount(appUser.githubId);
+  const [account, accountError] = await db.getAccount(appUser.accountId);
 
   if (!account) {
     return [undefined, accountError];

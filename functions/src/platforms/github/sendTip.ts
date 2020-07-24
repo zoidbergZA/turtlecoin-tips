@@ -1,11 +1,11 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
-import { TrtlApp, ServiceError } from 'trtl-apps';
+import { TrtlApp, ServiceError, Account } from 'trtl-apps';
 import { Application } from 'probot'
 import Webhooks from '@octokit/webhooks';
-import { TipCommandInfo, Transaction } from '../types';
-import { AppError } from '../appError';
-import * as db from '../database';
+import { TipCommandInfo, Transaction } from '../../types';
+import { AppError } from '../../appError';
+import * as db from '../../database';
 
 const frontendUrl = functions.config().frontend.url;
 
@@ -63,7 +63,7 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
     return `Unable to find github user: ${tipCommand.recipientUsername}`;
   }
 
-  const [senderAccount, senderAccError] = await db.getTurtleAccount(tipCommand.senderGithubId);
+  const [senderAccount, senderAccError] = await getAccountByGithubId(tipCommand.senderGithubId);
 
   if (!senderAccount) {
     console.log((senderAccError as AppError).message);
@@ -77,7 +77,7 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
     return 'An error occurred, please try again later.';
   }
 
-  const [recipientAccount, recipientAccError] = await db.getTurtleAccount(recipientGithubId);
+  const [recipientAccount, recipientAccError] = await getAccountByGithubId(recipientGithubId);
   let recipientAccountId: string | undefined;
 
   if (!recipientAccount) {
@@ -169,6 +169,16 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
   }
 
   return response;
+}
+
+async function getAccountByGithubId(githubId: number): Promise<[Account | undefined, undefined | AppError]> {
+  const [githubUser, userError] = await db.getGithubUser(githubId);
+
+  if (!githubUser) {
+    return [undefined, userError];
+  }
+
+  return db.getAccount(githubUser.accountId);
 }
 
 function getTipCommandInfo(comment: Webhooks.WebhookPayloadIssueCommentComment): TipCommandInfo | undefined {

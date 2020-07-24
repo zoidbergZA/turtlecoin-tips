@@ -53,29 +53,8 @@ export async function getGithubUser(githubId: number): Promise<[GithubUser | und
   }
 }
 
-/**
- * Retrieves a turtle account by account ID or github ID.
- *
- * @param id if a string is provided, fetches account by account ID, else by github ID (number).
- */
-export async function getTurtleAccount(id: number | string): Promise<[Account | undefined, undefined | AppError]> {
-  let accountId: string | undefined;
-
-  if (typeof(id) === 'number') {
-    const [githubUser, userError] = await getGithubUser(id);
-
-    if (!githubUser) {
-      return [undefined, userError];
-    }
-
-    accountId = githubUser.accountId;
-  }
-
-  if (typeof(id) === 'string') {
-    accountId = id;
-  }
-
-  const accountDoc = await admin.firestore().doc(`accounts/${accountId}`).get();
+export async function getAccount(id: string): Promise<[Account | undefined, undefined | AppError]> {
+  const accountDoc = await admin.firestore().doc(`accounts/${id}`).get();
 
   if (accountDoc.exists) {
     return [accountDoc.data() as Account, undefined];
@@ -85,6 +64,8 @@ export async function getTurtleAccount(id: number | string): Promise<[Account | 
 }
 
 export async function createGithubUser(githubId: number): Promise<[GithubUser | undefined, undefined | AppError]> {
+  // TODO: check if this githubId already has a turtle account before creating a new one
+
   const [account, accError] = await TrtlApp.createAccount();
 
   if (!account) {

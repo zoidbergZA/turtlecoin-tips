@@ -1,25 +1,8 @@
 import * as admin from 'firebase-admin';
 import { TrtlApp, Account, ServiceError, Transfer, WithdrawalPreview } from 'trtl-apps';
 import { AppError } from './appError';
-import { Octokit } from '@octokit/rest';
-import { WebAppUser, AppConfig, UnclaimedTip, GithubUser } from './types';
+import { WebAppUser, AppConfig, UnclaimedTip } from './types';
 import { DocumentData, Query } from '@google-cloud/firestore';
-
-const octokit = new Octokit({});
-
-// TODO: refactor to other GithubModule
-export async function getGithubIdByUsername(username: string): Promise<[number | undefined, undefined | AppError]> {
-  try {
-    const response = await octokit.users.getByUsername({
-      username: username
-    });
-
-    return [response.data.id, undefined];
-  } catch (error) {
-    console.log(error);
-    return [undefined, new AppError('github/user-not-found', error)];
-  }
-}
 
 export async function getAppUserByUid(uid: string): Promise<[WebAppUser | undefined, undefined | AppError]> {
   const snapshot = await admin.firestore().doc(`users/${uid}`).get();
@@ -31,30 +14,6 @@ export async function getAppUserByUid(uid: string): Promise<[WebAppUser | undefi
   }
 }
 
-// TODO: refactor to other GithubModule
-export async function getAppUserByGithubId(githubId: number): Promise<[WebAppUser | undefined, undefined | AppError]> {
-  const snapshot = await admin.firestore().collection(`users`)
-                    .where('githubId', '==', githubId)
-                    .get();
-
-  if (snapshot.size !== 1) {
-    return [undefined, new AppError('app/user-no-account')];
-}
-
-  return [snapshot.docs[0].data() as WebAppUser, undefined];
-}
-
-// TODO: refactor to other GithubModule
-export async function getGithubUser(githubId: number): Promise<[GithubUser | undefined, undefined | AppError]> {
-  const snapshot = await admin.firestore().doc(`platforms/github/users/${githubId}`).get();
-
-  if (snapshot.exists) {
-    return [snapshot.data() as GithubUser, undefined];
-  } else {
-    return [undefined, new AppError('github/user-not-found')];
-  }
-}
-
 export async function getAccount(id: string): Promise<[Account | undefined, undefined | AppError]> {
   const accountDoc = await admin.firestore().doc(`accounts/${id}`).get();
 
@@ -62,35 +21,6 @@ export async function getAccount(id: string): Promise<[Account | undefined, unde
     return [accountDoc.data() as Account, undefined];
   } else {
     return [undefined, new AppError('app/user-no-account')];
-  }
-}
-
-// TODO: refactor to other GithubModule
-export async function createGithubUser(githubId: number): Promise<[GithubUser | undefined, undefined | AppError]> {
-  // TODO: check if this githubId already has a turtle account before creating a new one
-
-  const [account, accError] = await TrtlApp.createAccount();
-
-  if (!account) {
-    return [undefined, new AppError('app/create-account', (accError as ServiceError).message)];
-  }
-
-  try {
-    const githubUser: GithubUser = {
-      githubId: githubId,
-      accountId: account.id
-    }
-
-    const batch = admin.firestore().batch();
-
-    batch.create(admin.firestore().doc(`accounts/${account.id}`), account);
-    batch.create(admin.firestore().doc(`platforms/github/users/${githubId}`), githubUser);
-
-    await batch.commit();
-
-    return [githubUser, undefined];
-  } catch (error) {
-    return [undefined, new AppError('app/create-account', `error creating GithubUser for id: ${githubId}`)];
   }
 }
 

@@ -3,6 +3,8 @@ import * as functions from 'firebase-functions';
 import { TrtlApp, ServiceError, Account } from 'trtl-apps';
 import { Application } from 'probot'
 import Webhooks from '@octokit/webhooks';
+import { getGithubIdByUsername, getWebAppUserByGithubId,
+  getGithubUser, createGithubUser } from '../githubModule';
 import { TipCommandInfo, Transaction } from '../../../types';
 import { AppError } from '../../../appError';
 import * as db from '../../../database';
@@ -46,7 +48,7 @@ export function initListeners(bot: Application) {
 }
 
 async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
-  const [sendingUser] = await db.getAppUserByGithubId(tipCommand.senderGithubId);
+  const [sendingUser] = await getWebAppUserByGithubId(tipCommand.senderGithubId);
 
   if (!sendingUser) {
     return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit ${frontendUrl} to get started.`;
@@ -56,7 +58,7 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
     return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit ${frontendUrl} to get started.`;
   }
 
-  const [recipientGithubId, userError] = await db.getGithubIdByUsername(tipCommand.recipientUsername);
+  const [recipientGithubId, userError] = await getGithubIdByUsername(tipCommand.recipientUsername);
 
   if (!recipientGithubId) {
     console.log((userError as AppError).message);
@@ -81,7 +83,7 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
   let recipientAccountId: string | undefined;
 
   if (!recipientAccount) {
-    const [recipientGithubUser, createError] = await db.createGithubUser(recipientGithubId);
+    const [recipientGithubUser, createError] = await createGithubUser(recipientGithubId);
 
     if (recipientGithubUser) {
       recipientAccountId = recipientGithubUser.accountId;
@@ -172,7 +174,7 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
 }
 
 async function getAccountByGithubId(githubId: number): Promise<[Account | undefined, undefined | AppError]> {
-  const [githubUser, userError] = await db.getGithubUser(githubId);
+  const [githubUser, userError] = await getGithubUser(githubId);
 
   if (!githubUser) {
     return [undefined, userError];

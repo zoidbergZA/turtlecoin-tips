@@ -3,10 +3,13 @@ import * as functions from 'firebase-functions';
 import * as db from '../../database';
 import * as bot from './bot/bot';
 import groupBy from 'lodash.groupby';
+import { Octokit } from '@octokit/rest';
 import { Request, Response } from 'express';
 import { AppError } from '../../appError';
-import { WebAppUser, UnclaimedTip, Transaction } from '../../types';
+import { WebAppUser, UnclaimedTip, Transaction, GithubUser } from '../../types';
 import { TrtlApp, ServiceError } from 'trtl-apps';
+
+const octokit = new Octokit({});
 
 /**
  * Relay Github events to the bot
@@ -15,7 +18,7 @@ export const botWebhook = functions.https.onRequest(async (request: Request, res
   await bot.onRequest(request, response);
 });
 
-export async function onNewGithubUser(user: admin.auth.UserRecord): Promise<void> {
+export async function onAuthUserCreated(user: admin.auth.UserRecord): Promise<void> {
   const provider = user.providerData.find(p => p.providerId === 'github.com');
 
   if (!provider) {
@@ -43,7 +46,7 @@ export async function onNewGithubUser(user: admin.auth.UserRecord): Promise<void
     return;
   }
 
-  const [existingGithubUser] = await db.getGithubUser(appUser.githubId);
+  const [existingGithubUser] = await getGithubUser(appUser.githubId);
 
   if (existingGithubUser) {
     appUser.accountId = existingGithubUser.accountId;
@@ -61,7 +64,7 @@ export async function onNewGithubUser(user: admin.auth.UserRecord): Promise<void
       await db.deleteUnclaimedTips(tips.map(t => t.id));
     }
   } else {
-    const [githubUser, userError] = await db.createGithubUser(appUser.githubId);
+    const [githubUser, userError] = await createGithubUser(appUser.githubId);
 
     if (githubUser) {
       await admin.firestore().doc(`users/${appUser.uid}`).update({
@@ -72,6 +75,69 @@ export async function onNewGithubUser(user: admin.auth.UserRecord): Promise<void
     } else {
       console.log(`error creating account for app user [${appUser.uid}]: ${(userError as AppError).message}`);
     }
+  }
+}
+
+export async function createGithubUser(githubId: number): Promise<[GithubUser | undefined, undefined | AppError]> {
+  // TODO: check if this githubId already has a turtle account before creating a new one
+
+  const [account, accError] = await TrtlApp.createAccount();
+
+  if (!account) {
+    return [undefined, new AppError('app/create-account', (accError as ServiceError).message)];
+  }
+
+  try {
+    const githubUser: GithubUser = {
+      githubId: githubId,
+      accountId: account.id
+    }
+
+    const batch = admin.firestore().batch();
+
+    batch.create(admin.firestore().doc(`accounts/${account.id}`), account);
+    batch.create(admin.firestore().doc(`platforms/github/users/${githubId}`), githubUser);
+
+    await batch.commit();
+
+    return [githubUser, undefined];
+  } catch (error) {
+    return [undefined, new AppError('app/create-account', `error creating GithubUser for id: ${githubId}`)];
+  }
+}
+
+export async function getGithubUser(githubId: number): Promise<[GithubUser | undefined, undefined | AppError]> {
+  const snapshot = await admin.firestore().doc(`platforms/github/users/${githubId}`).get();
+
+  if (snapshot.exists) {
+    return [snapshot.data() as GithubUser, undefined];
+  } else {
+    return [undefined, new AppError('github/user-not-found')];
+  }
+}
+
+export async function getWebAppUserByGithubId(githubId: number): Promise<[WebAppUser | undefined, undefined | AppError]> {
+  const snapshot = await admin.firestore().collection(`users`)
+                    .where('githubId', '==', githubId)
+                    .get();
+
+  if (snapshot.size !== 1) {
+    return [undefined, new AppError('app/user-no-account')];
+  }
+
+  return [snapshot.docs[0].data() as WebAppUser, undefined];
+}
+
+export async function getGithubIdByUsername(username: string): Promise<[number | undefined, undefined | AppError]> {
+  try {
+    const response = await octokit.users.getByUsername({
+      username: username
+    });
+
+    return [response.data.id, undefined];
+  } catch (error) {
+    console.log(error);
+    return [undefined, new AppError('github/user-not-found', error)];
   }
 }
 

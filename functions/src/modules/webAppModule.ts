@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import * as db from '../database';
-import { onNewGithubUser } from './github/githubModule';
+import { onAuthUserCreated as newGithubAuthUser } from './github/githubModule';
 import { AppError } from '../appError';
 import { WithdrawalPreview, TrtlApp, ServiceError, Withdrawal } from 'trtl-apps';
 import { Transaction } from '../types';
@@ -11,7 +11,7 @@ export const onNewAuthUserCreated = functions.auth.user().onCreate(async (user) 
   console.log(`user provider data: ${JSON.stringify(user.providerData)}`);
 
   if (user.providerData.some(p => p.providerId === 'github.com')) {
-    await onNewGithubUser(user);
+    await newGithubAuthUser(user);
   } else {
     console.log(`unsupported provider: ${JSON.stringify(user.providerData)}, deleting auth user [${user.uid}]...`);
     await admin.auth().deleteUser(user.uid);

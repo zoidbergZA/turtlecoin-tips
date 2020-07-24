@@ -72,9 +72,9 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
     return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit ${frontendUrl} to get started.`;
   }
 
-  const [appConfig, configError] = await db.getAppConfig();
+  const [config, configError] = await db.getConfig();
 
-  if (!appConfig) {
+  if (!config) {
     console.log((configError as AppError).message);
     return 'An error occurred, please try again later.';
   }
@@ -154,10 +154,10 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
   if (!recipientAppUser) {
     response += `\n\n @${tipCommand.recipientUsername} you have not linked a tips account yet, visit ${frontendUrl} to activate your account.`;
 
-    if (appConfig.tipTimeoutDays > 0) {
+    if (config.githubTipTimeoutDays > 0) {
       const [doc, tipError] = await db.createUnclaimedTipDoc(
                                 transfer,
-                                appConfig.tipTimeoutDays,
+                                config.githubTipTimeoutDays,
                                 tipCommand.senderUsername,
                                 tipCommand.recipientUsername,
                                 recipientGithubId);

@@ -1,8 +1,7 @@
 import * as admin from 'firebase-admin';
 import { TrtlApp, Account, ServiceError, Transfer, WithdrawalPreview } from 'trtl-apps';
 import { AppError } from './appError';
-import { WebAppUser, AppConfig, UnclaimedTip } from './types';
-import { DocumentData, Query } from '@google-cloud/firestore';
+import { WebAppUser, Config, UnclaimedTip } from './types';
 
 export async function getAppUserByUid(uid: string): Promise<[WebAppUser | undefined, undefined | AppError]> {
   const snapshot = await admin.firestore().doc(`users/${uid}`).get();
@@ -95,43 +94,11 @@ export async function createUnclaimedTipDoc(
   }
 }
 
-export async function getUnclaimedTips(githubId?: number, expired: boolean = false): Promise<UnclaimedTip[]> {
-  let query: Query<DocumentData> = admin.firestore().collection('unclaimed_tips');
-  const now = Date.now();
-
-  if (githubId) {
-    query = query.where('recipientGithubId', '==', githubId);
-  }
-
-  if (expired) {
-    query = query.where('timeoutDate', '<', now);
-  }
-
-  const snapshot = await query.get();
-  return snapshot.docs.map((d: any) => d.data() as UnclaimedTip);
-}
-
-export async function deleteUnclaimedTips(tipIds: string[]): Promise<boolean> {
-  try {
-    const batch = admin.firestore().batch();
-
-    tipIds.forEach(id => {
-      batch.delete(admin.firestore().doc(`unclaimed_tips/${id}`));
-    });
-
-    await batch.commit();
-    return true;
-  } catch (error) {
-    console.log(error);
-    return false;
-  }
-}
-
-export async function getAppConfig(): Promise<[AppConfig | undefined, undefined | AppError]> {
+export async function getConfig(): Promise<[Config | undefined, undefined | AppError]> {
   const snapshot = await admin.firestore().doc('globals/config').get();
 
   if (snapshot.exists) {
-    return [snapshot.data() as AppConfig, undefined];
+    return [snapshot.data() as Config, undefined];
   } else {
     return [undefined, new AppError('app/config')];
   }

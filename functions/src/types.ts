@@ -1,7 +1,7 @@
 import { Transfer } from 'trtl-apps';
 
-export interface AppConfig {
-  tipTimeoutDays: number    // amount of days before unclaimed tips are refunded. < 1 days means no timeout
+export interface Config {
+  githubTipTimeoutDays: number    // amount of days before unclaimed tips are refunded. < 1 days means no timeout
 }
 
 export interface WebAppUser {

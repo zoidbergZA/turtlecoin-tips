@@ -3,6 +3,7 @@ import * as functions from 'firebase-functions';
 import * as db from '../../database';
 import * as bot from './bot/bot';
 import groupBy from 'lodash.groupby';
+import { DocumentData, Query } from '@google-cloud/firestore';
 import { Octokit } from '@octokit/rest';
 import { Request, Response } from 'express';
 import { AppError } from '../../appError';
@@ -58,10 +59,10 @@ export async function onAuthUserCreated(user: admin.auth.UserRecord): Promise<vo
     console.log(`associated account [${existingGithubUser.accountId}] with app user [${appUser.uid}].`);
 
     // if the new user already has a tips account, cancel all unclaimed tips.
-    const tips = await db.getUnclaimedTips(appUser.githubId);
+    const tips = await getUnclaimedTips(appUser.githubId);
 
     if (tips.length > 0) {
-      await db.deleteUnclaimedTips(tips.map(t => t.id));
+      await deleteUnclaimedTips(tips.map(t => t.id));
     }
   } else {
     const [githubUser, userError] = await createGithubUser(appUser.githubId);
@@ -142,7 +143,7 @@ export async function getGithubIdByUsername(username: string): Promise<[number |
 }
 
 export const refundUnclaimedTips = functions.pubsub.schedule('every 2 hours').onRun(async (context) => {
-  const expiredTips = await db.getUnclaimedTips(undefined, true);
+  const expiredTips = await getUnclaimedTips(undefined, true);
 
   if (expiredTips.length === 0) {
     return;
@@ -167,13 +168,45 @@ export const refundUnclaimedTips = functions.pubsub.schedule('every 2 hours').on
   return Promise.all(promisses);
 });
 
+async function getUnclaimedTips(githubId?: number, expired: boolean = false): Promise<UnclaimedTip[]> {
+  let query: Query<DocumentData> = admin.firestore().collection('unclaimed_tips');
+  const now = Date.now();
+
+  if (githubId) {
+    query = query.where('recipientGithubId', '==', githubId);
+  }
+
+  if (expired) {
+    query = query.where('timeoutDate', '<', now);
+  }
+
+  const snapshot = await query.get();
+  return snapshot.docs.map((d: any) => d.data() as UnclaimedTip);
+}
+
+async function deleteUnclaimedTips(tipIds: string[]): Promise<boolean> {
+  try {
+    const batch = admin.firestore().batch();
+
+    tipIds.forEach(id => {
+      batch.delete(admin.firestore().doc(`unclaimed_tips/${id}`));
+    });
+
+    await batch.commit();
+    return true;
+  } catch (error) {
+    console.log(error);
+    return false;
+  }
+}
+
 async function refundAccountUnclaimedTips(githubId: number, tips: UnclaimedTip[]): Promise<void> {
   // refund tips received by this account, if that account still doesn't have an AppUser
   const appUserSnapshot = await admin.firestore().collection('users').where('githubId', '==', githubId).get();
 
   if (appUserSnapshot.size > 0) {
     // this appUser now exists, don't refund tips and delete the unclaimed tip docs
-    await db.deleteUnclaimedTips(tips.map(t => t.id));
+    await deleteUnclaimedTips(tips.map(t => t.id));
     return;
   }
 

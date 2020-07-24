@@ -79,6 +79,21 @@ export const userWithdraw = functions.https.onCall(async (data, context) => {
   }
 });
 
+export async function getAccountOwner(accountId: string): Promise<[WebAppUser | undefined, undefined | AppError]> {
+  console.log(`get AppUser by accountId: [${accountId}]...`);
+
+  const snapshot = await admin.firestore()
+                    .collection('users')
+                    .where('accountId', '==', accountId)
+                    .get();
+
+  if (snapshot.size !== 1) {
+    return [undefined, new AppError('app/user-not-found')];
+  }
+
+  return [snapshot.docs[0].data() as WebAppUser, undefined];
+}
+
 async function getAppUserByUid(uid: string): Promise<[WebAppUser | undefined, undefined | AppError]> {
   const snapshot = await admin.firestore().doc(`users/${uid}`).get();
 

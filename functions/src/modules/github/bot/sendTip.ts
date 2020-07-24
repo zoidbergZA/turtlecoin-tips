@@ -7,9 +7,10 @@ import { getGithubIdByUsername, getWebAppUserByGithubId,
   getGithubUser, createGithubUser, createUnclaimedTipDoc } from '../githubModule';
 import { TipCommandInfo, Transaction } from '../../../types';
 import { AppError } from '../../../appError';
+import { getAccountOwner } from '../../webAppModule';
 import * as db from '../../../database';
 
-const frontendUrl = functions.config().frontend.url;
+const webAppUrl = functions.config().frontend.url;
 
 export function initListeners(bot: Application) {
   bot.on('issue_comment.created', async context => {
@@ -51,11 +52,11 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
   const [sendingUser] = await getWebAppUserByGithubId(tipCommand.senderGithubId);
 
   if (!sendingUser) {
-    return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit ${frontendUrl} to get started.`;
+    return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit ${webAppUrl} to get started.`;
   }
 
   if (!sendingUser.githubId) {
-    return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit ${frontendUrl} to get started.`;
+    return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit ${webAppUrl} to get started.`;
   }
 
   const [recipientGithubId, userError] = await getGithubIdByUsername(tipCommand.recipientUsername);
@@ -69,7 +70,7 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
 
   if (!senderAccount) {
     console.log((senderAccError as AppError).message);
-    return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit ${frontendUrl} to get started.`;
+    return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit ${webAppUrl} to get started.`;
   }
 
   const [config, configError] = await db.getConfig();
@@ -147,12 +148,12 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
     db.refreshAccount(recipientAccountId)
   ]);
 
-  let response = `\`${(tipCommand.amount / 100).toFixed(2)} TRTL\` tip successfully sent to @${tipCommand.recipientUsername}! Visit ${frontendUrl} to manage your tips.`;
+  let response = `\`${(tipCommand.amount / 100).toFixed(2)} TRTL\` tip successfully sent to @${tipCommand.recipientUsername}! Visit ${webAppUrl} to manage your tips.`;
 
-  const [recipientAppUser] = await db.getAccountOwner(recipientAccountId);
+  const [recipientAppUser] = await getAccountOwner(recipientAccountId);
 
   if (!recipientAppUser) {
-    response += `\n\n @${tipCommand.recipientUsername} you have not linked a tips account yet, visit ${frontendUrl} to activate your account.`;
+    response += `\n\n @${tipCommand.recipientUsername} you have not linked a tips account yet, visit ${webAppUrl} to activate your account.`;
 
     if (config.githubTipTimeoutDays > 0) {
       const [doc, tipError] = await createUnclaimedTipDoc(

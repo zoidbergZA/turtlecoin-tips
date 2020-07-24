@@ -3,7 +3,6 @@ import * as functions from 'firebase-functions';
 import * as db from '../database';
 import * as crypto from 'crypto';
 import { Withdrawal, Deposit } from "trtl-apps";
-import { AppError } from "../appError";
 import { Transaction } from "../types";
 
 type CallbackCode =   'deposit/confirming'      |
@@ -82,25 +81,11 @@ async function proccesConfirmingDeposit(deposit: Deposit): Promise<void> {
     return;
   }
 
-  const [user, userError] = await db.getAccountOwner(deposit.accountId);
-
-  if (!user) {
-    console.log((userError as AppError).message);
-    return;
-  }
-
-  if (!user.githubId) {
-    console.log(`user does not have a linked github ID!`);
-    return;
-  }
-
   const txDocRef = admin.firestore().collection(`accounts/${deposit.accountId}/transactions`).doc();
 
   const tx: Transaction = {
     id:           txDocRef.id,
-    userId:       user.uid,
     accountId:    deposit.accountId,
-    githubId:     user.githubId,
     timestamp:    deposit.createdDate,
     transferType: 'deposit',
     amount:       deposit.amount,

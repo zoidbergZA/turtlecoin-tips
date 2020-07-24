@@ -24,21 +24,6 @@ export async function refreshAccount(accountId: string): Promise<void> {
   await admin.firestore().doc(`accounts/${accountId}`).set(account);
 }
 
-export async function getAccountOwner(accountId: string): Promise<[WebAppUser | undefined, undefined | AppError]> {
-  console.log(`get AppUser by accountId: [${accountId}]...`);
-
-  const snapshot = await admin.firestore()
-                    .collection('users')
-                    .where('accountId', '==', accountId)
-                    .get();
-
-  if (snapshot.size !== 1) {
-    return [undefined, new AppError('app/user-not-found')];
-  }
-
-  return [snapshot.docs[0].data() as WebAppUser, undefined];
-}
-
 export async function getConfig(): Promise<[Config | undefined, undefined | AppError]> {
   const snapshot = await admin.firestore().doc('globals/config').get();
 

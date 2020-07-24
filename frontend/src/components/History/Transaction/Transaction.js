@@ -2,12 +2,23 @@ import React from 'react';
 import styles from './Transaction.module.scss';
 
 const Transaction = ({ tx }) => {
+  const txInfoStyles = [styles.info];
+  const amountStyles = [];
+
+  if (tx.status === 'failed') {
+    txInfoStyles.push(styles.error);
+    amountStyles.push(styles.faded);
+  }
+
+
+
+
   return (
     <tr className={styles.text}>
       <td className={styles.date}>{convertTimestamp(tx.timestamp)}</td>
       <td>{tx.transferType}</td>
-      <td><div className={styles.info}>{getInfoText(tx)}</div></td>
-      <td>{getAmountText(tx)}</td>
+      <td><div className={txInfoStyles.join(' ')}>{getInfoText(tx)}</div></td>
+      <td className={amountStyles.join(' ')}>{getAmountText(tx)}</td>
     </tr>
   );
 }
@@ -16,7 +27,10 @@ function getInfoText(tx) {
   switch (tx.transferType) {
     case 'deposit':
     case 'withdrawal':
-      return tx.txHash;
+      if (tx.status === 'failed')
+        return 'FAILED'
+      else
+        return tx.txHash;
     case 'tip':
       if (tx.amount > 0)
       return `from @${tx.senderUsername}`;

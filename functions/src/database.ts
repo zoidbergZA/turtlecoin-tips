@@ -3,16 +3,6 @@ import { TrtlApp, Account, ServiceError, WithdrawalPreview } from 'trtl-apps';
 import { AppError } from './appError';
 import { WebAppUser, Config } from './types';
 
-export async function getAppUserByUid(uid: string): Promise<[WebAppUser | undefined, undefined | AppError]> {
-  const snapshot = await admin.firestore().doc(`users/${uid}`).get();
-
-  if (snapshot.exists) {
-    return [snapshot.data() as WebAppUser, undefined];
-  } else {
-    return [undefined, new AppError('app/user-not-found')];
-  }
-}
-
 export async function getAccount(id: string): Promise<[Account | undefined, undefined | AppError]> {
   const accountDoc = await admin.firestore().doc(`accounts/${id}`).get();
 
@@ -47,19 +37,6 @@ export async function getAccountOwner(accountId: string): Promise<[WebAppUser | 
   }
 
   return [snapshot.docs[0].data() as WebAppUser, undefined];
-}
-
-export async function getPreparedWithdrawal(
-  userId: string,
-  preparedWithdrawalId: string
-): Promise<WithdrawalPreview | null> {
-  const snapshot = await admin.firestore().doc(`users/${userId}/prepared_withdrawals/${preparedWithdrawalId}`).get();
-
-  if (snapshot.exists) {
-    return snapshot.data() as WithdrawalPreview;
-  } else {
-    return null;
-  }
 }
 
 export async function getConfig(): Promise<[Config | undefined, undefined | AppError]> {

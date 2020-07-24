@@ -4,7 +4,7 @@ import * as db from '../database';
 import { onAuthUserCreated as newGithubAuthUser } from './github/githubModule';
 import { AppError } from '../appError';
 import { WithdrawalPreview, TrtlApp, ServiceError, Withdrawal } from 'trtl-apps';
-import { Transaction } from '../types';
+import { Transaction, WebAppUser } from '../types';
 
 export const onNewAuthUserCreated = functions.auth.user().onCreate(async (user) => {
   console.log(`creating new user => uid: ${user.uid}`);
@@ -53,7 +53,7 @@ export const userWithdraw = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('invalid-argument', 'Invalid prepared withdrawal ID.');
   }
 
-  const [appUser, userError] = await db.getAppUserByUid(userId);
+  const [appUser, userError] = await getAppUserByUid(userId);
 
   if (!appUser) {
     console.log((userError as AppError).message);
@@ -64,7 +64,7 @@ export const userWithdraw = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('not-found', 'user github ID not found.');
   }
 
-  const preparedWithdrawal = await db.getPreparedWithdrawal(userId, preparedWithdrawalId);
+  const preparedWithdrawal = await getPreparedWithdrawal(userId, preparedWithdrawalId);
 
   if (!preparedWithdrawal) {
     throw new functions.https.HttpsError('not-found', 'Prepared withdrawal not found.');
@@ -79,12 +79,22 @@ export const userWithdraw = functions.https.onCall(async (data, context) => {
   }
 });
 
+async function getAppUserByUid(uid: string): Promise<[WebAppUser | undefined, undefined | AppError]> {
+  const snapshot = await admin.firestore().doc(`users/${uid}`).get();
+
+  if (snapshot.exists) {
+    return [snapshot.data() as WebAppUser, undefined];
+  } else {
+    return [undefined, new AppError('app/user-not-found')];
+  }
+}
+
 async function prepareWithdrawToAddress(
   userId: string,
   amount: number,
   address: string
 ): Promise<[WithdrawalPreview | undefined, AppError | undefined]> {
-  const [appUser, userError] = await db.getAppUserByUid(userId);
+  const [appUser, userError] = await getAppUserByUid(userId);
 
   if (!appUser) {
     return [undefined, userError];
@@ -110,6 +120,19 @@ async function prepareWithdrawToAddress(
   await docRef.create(preview);
 
   return [preview, undefined];
+}
+
+async function getPreparedWithdrawal(
+  userId: string,
+  preparedWithdrawalId: string
+): Promise<WithdrawalPreview | null> {
+  const snapshot = await admin.firestore().doc(`users/${userId}/prepared_withdrawals/${preparedWithdrawalId}`).get();
+
+  if (snapshot.exists) {
+    return snapshot.data() as WithdrawalPreview;
+  } else {
+    return null;
+  }
 }
 
 async function sendPreparedWithdrawal(

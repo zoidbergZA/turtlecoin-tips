@@ -1,7 +1,7 @@
 import * as admin from 'firebase-admin';
-import { TrtlApp, Account, ServiceError, WithdrawalPreview } from 'trtl-apps';
+import { TrtlApp, Account, ServiceError } from 'trtl-apps';
 import { AppError } from './appError';
-import { WebAppUser, Config } from './types';
+import { Config } from './types';
 
 export async function getAccount(id: string): Promise<[Account | undefined, undefined | AppError]> {
   const accountDoc = await admin.firestore().doc(`accounts/${id}`).get();

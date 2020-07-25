@@ -234,11 +234,11 @@ async function deleteUnclaimedTips(tipIds: string[]): Promise<boolean> {
 }
 
 async function refundAccountUnclaimedTips(githubId: number, tips: UnclaimedTip[]): Promise<void> {
-  // refund tips received by this account, if that account still doesn't have an AppUser
+  // refund tips received by this account, if the account still doesn't have a WebAppUser
   const appUserSnapshot = await admin.firestore().collection('users').where('githubId', '==', githubId).get();
 
   if (appUserSnapshot.size > 0) {
-    // this appUser now exists, don't refund tips and delete the unclaimed tip docs
+    // this webAppUser now exists, don't refund tips and delete the unclaimed tip docs
     await deleteUnclaimedTips(tips.map(t => t.id));
     return;
   }

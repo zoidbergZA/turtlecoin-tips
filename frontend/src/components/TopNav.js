@@ -37,7 +37,7 @@ const TopNav = () => {
             <Icon>
               <FontAwesomeIcon icon={faLock} />
             </Icon>
-            <span>lock</span>
+            <span>Lock</span>
           </Navbar.Item>
         </Navbar.Container>
       </Navbar.Menu>

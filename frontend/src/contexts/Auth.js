@@ -5,6 +5,7 @@ import { doc } from 'rxfire/firestore';
 import { map, switchMap } from 'rxjs/operators'
 import { from } from 'rxjs';
 import Spinner from 'components/Spinner/Spinner';
+import Disclaimer from 'components/Disclaimer';
 
 export const AuthContext = React.createContext();
 
@@ -40,6 +41,10 @@ export const AuthProvider = ({ children }) => {
         <Spinner />
       </div>
     )
+  }
+
+  if (currentUser && !currentUser.disclaimerAccepted) {
+    return <Disclaimer></Disclaimer>
   }
 
   return (

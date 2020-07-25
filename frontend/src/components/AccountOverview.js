@@ -7,7 +7,7 @@ import Image from 'react-bulma-components/lib/components/image';
 import Section from 'react-bulma-components/lib/components/section';
 import Button from 'react-bulma-components/lib/components/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronUp, faHistory } from '@fortawesome/free-solid-svg-icons';
+import { faChevronUp, faHistory, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 const AccountOverview = ( {depositAddress, depositQrCode, balanceLocked, balanceUnlocked} ) => {
   let amountLocked;
@@ -35,6 +35,10 @@ const AccountOverview = ( {depositAddress, depositQrCode, balanceLocked, balance
             <Button color="info" to="/history" renderAs={Link}>
               <FontAwesomeIcon icon={faHistory}></FontAwesomeIcon>
               <span style={{ paddingLeft: "5px" }}>transaction history</span>
+            </Button>
+            <Button color="info" to="/history" renderAs={Link}>
+              <FontAwesomeIcon icon={faQuestionCircle}></FontAwesomeIcon>
+              <span style={{ paddingLeft: "5px" }}>help</span>
             </Button>
           </Button.Group>
         </div>

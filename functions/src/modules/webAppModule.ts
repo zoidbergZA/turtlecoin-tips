@@ -19,6 +19,16 @@ export const onNewAuthUserCreated = functions.auth.user().onCreate(async (user) 
   }
 });
 
+export const userAgreeDisclaimer = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('failed-precondition', 'The function must be called while authenticated.');
+  }
+
+  await admin.firestore().doc(`users/${context.auth.uid}`).update({
+    disclaimerAccepted: true
+  });
+});
+
 export const userPrepareWithdrawal = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError('failed-precondition', 'The function must be called while authenticated.');

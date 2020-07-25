@@ -9,6 +9,7 @@ export interface WebAppUser {
   githubId?: number;
   accountId?: string;
   username: string;
+  disclaimerAccepted: boolean;
 }
 
 export interface GithubUser {

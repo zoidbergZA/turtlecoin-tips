@@ -9,6 +9,7 @@ import Home from './components/Home';
 import Login from './components/Login';
 import Withdraw from './components/Withdraw/Withdraw';
 import History from './components/History/History';
+import Disclaimer from './components/Disclaimer';
 
 function App() {
   return (

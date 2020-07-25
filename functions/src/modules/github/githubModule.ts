@@ -37,7 +37,8 @@ export async function onAuthUserCreated(user: admin.auth.UserRecord): Promise<vo
   const appUser: WebAppUser = {
     uid: user.uid,
     username: username,
-    githubId: githubId
+    githubId: githubId,
+    disclaimerAccepted: false
   }
 
   try {

@@ -29,11 +29,13 @@ export function initListeners(bot: Application) {
 
     console.log(`comment created by: ${senderLogin}, id: ${senderId}`);
 
-    const tipInfo = getTipCommandInfo(context.payload.comment);
+    const [tipInfo, errorText] = getTipCommandInfo(context.payload.comment);
 
     if (!tipInfo) {
-      console.log('invalid tip command.');
-      const params = context.issue({ body: 'Invalid tip command.' });
+      const commandError = errorText as string;
+      console.log(`invalid tip command: ${commandError}`);
+
+      const params = context.issue({ body: commandError });
       await context.github.issues.createComment(params);
 
       return;
@@ -184,17 +186,19 @@ async function getAccountByGithubId(githubId: number): Promise<[Account | undefi
   return db.getAccount(githubUser.accountId);
 }
 
-function getTipCommandInfo(comment: Webhooks.WebhookPayloadIssueCommentComment): TipCommandInfo | undefined {
+function getTipCommandInfo(
+  comment: Webhooks.WebhookPayloadIssueCommentComment
+): [TipCommandInfo | undefined, undefined | string] {
   const mentions = getMentions(comment.body);
 
   if (mentions.length === 0) {
-    return undefined;
+    return [undefined, 'No tip recipient defined.'];
   }
 
   const amount = getTipAmount(comment.body);
 
   if (!amount) {
-    return undefined;
+    return [undefined, 'Invalid tip amount.'];
   }
 
   const tipInfo: TipCommandInfo = {
@@ -204,7 +208,7 @@ function getTipCommandInfo(comment: Webhooks.WebhookPayloadIssueCommentComment):
     amount: amount
   };
 
-  return tipInfo;
+  return [tipInfo, undefined];
 }
 
 function getTipAmount(text: string): number | undefined {
@@ -221,9 +225,9 @@ function getTipAmount(text: string): number | undefined {
     return undefined;
   }
 
+  // convert to atomic units
   amount = Math.ceil(amount * 100);
 
-  // convert to atomic units
   return amount;
 }
 

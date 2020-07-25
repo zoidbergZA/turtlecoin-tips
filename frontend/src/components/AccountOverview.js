@@ -36,7 +36,7 @@ const AccountOverview = ( {depositAddress, depositQrCode, balanceLocked, balance
               <FontAwesomeIcon icon={faHistory}></FontAwesomeIcon>
               <span style={{ paddingLeft: "5px" }}>transaction history</span>
             </Button>
-            <Button color="info" to="/history" renderAs={Link}>
+            <Button color="info" to="/help" renderAs={Link}>
               <FontAwesomeIcon icon={faQuestionCircle}></FontAwesomeIcon>
               <span style={{ paddingLeft: "5px" }}>help</span>
             </Button>

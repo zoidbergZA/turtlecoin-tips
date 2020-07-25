@@ -9,7 +9,7 @@ import Home from './components/Home';
 import Login from './components/Login';
 import Withdraw from './components/Withdraw/Withdraw';
 import History from './components/History/History';
-import Disclaimer from './components/Disclaimer';
+import Help from 'components/Help';
 
 function App() {
   return (
@@ -22,6 +22,7 @@ function App() {
               <PrivateRoute exact path="/" component={Home}/>
               <PrivateRoute exact path="/withdraw" component={Withdraw}/>
               <PrivateRoute exact path="/history" component={History}/>
+              <PrivateRoute exact path="/help" component={Help}/>
             </TurtleAccountProvider>
             <Route exact path="/login" component={Login}/>
           </React.Fragment>

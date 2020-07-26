@@ -19,6 +19,11 @@ export const botWebhook = functions.https.onRequest(async (request: Request, res
   await bot.onRequest(request, response);
 });
 
+export const marketplaceWebhook = functions.https.onRequest(async (request: Request, response: Response) => {
+  console.log(request.body);
+  response.status(200).send({status: 'OK'});
+});
+
 export async function onAuthUserCreated(user: admin.auth.UserRecord): Promise<void> {
   const provider = user.providerData.find(p => p.providerId === 'github.com');
 

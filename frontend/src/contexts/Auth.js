@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import app from '../base';
+import * as firebase from 'firebase/app';
 import { authState } from 'rxfire/auth';
 import { doc } from 'rxfire/firestore';
 import { map, switchMap } from 'rxjs/operators'
@@ -26,10 +27,11 @@ export const AuthProvider = ({ children }) => {
         }
       }),
       map(userDoc => userDoc.data())
-    ).subscribe(userDoc => {
-      setCurrentUser(userDoc);
+    ).subscribe(webAppUser => {
+      setCurrentUser(webAppUser);
 
-      if (userDoc) {
+      if (webAppUser) {
+        firebase.analytics().setUserId(webAppUser.uid);
         setPending(false);
       }
     });

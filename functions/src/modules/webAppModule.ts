@@ -3,8 +3,8 @@ import * as functions from 'firebase-functions';
 import * as db from '../database';
 import { onAuthUserCreated as newGithubAuthUser } from './github/githubModule';
 import { AppError } from '../appError';
-import { WithdrawalPreview, TrtlApp, ServiceError, Withdrawal } from 'trtl-apps';
-import { Transaction, WebAppUser } from '../types';
+import { WithdrawalPreview, ServiceError } from 'trtl-apps';
+import { WebAppUser } from '../types';
 
 export const onNewAuthUserCreated = functions.auth.user().onCreate(async (user) => {
   console.log(`creating new user => uid: ${user.uid}`);
@@ -70,17 +70,17 @@ export const userWithdraw = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('not-found', (userError as AppError).message);
   }
 
-  if (!appUser.githubId) {
-    throw new functions.https.HttpsError('not-found', 'user github ID not found.');
+  if (!appUser.accountId) {
+    throw new functions.https.HttpsError('not-found', 'user account not found.');
   }
 
-  const preparedWithdrawal = await getPreparedWithdrawal(userId, preparedWithdrawalId);
+  const preparedWithdrawal = await db.getPreparedWithdrawal(appUser.accountId, preparedWithdrawalId);
 
   if (!preparedWithdrawal) {
     throw new functions.https.HttpsError('not-found', 'Prepared withdrawal not found.');
   }
 
-  const [withdrawal, error] = await sendPreparedWithdrawal(userId, appUser.githubId, preparedWithdrawal);
+  const [withdrawal, error] = await db.sendPreparedWithdrawal(preparedWithdrawal);
 
   if (withdrawal) {
     return withdrawal;
@@ -129,71 +129,5 @@ async function prepareWithdrawToAddress(
     return [undefined, new AppError('app/user-no-account', `app user ${appUser.uid} doesn't have a turtle account id assigned!`)];
   }
 
-  const [account, accountError] = await db.getAccount(appUser.accountId);
-
-  if (!account) {
-    return [undefined, accountError];
-  }
-
-  const [preview, error] = await TrtlApp.withdrawalPreview(account.id, amount, address);
-
-  if (!preview) {
-    return [undefined, (error as AppError)];
-  }
-
-  const docRef = admin.firestore().doc(`users/${userId}/prepared_withdrawals/${preview.id}`);
-  await docRef.create(preview);
-
-  return [preview, undefined];
-}
-
-async function getPreparedWithdrawal(
-  userId: string,
-  preparedWithdrawalId: string
-): Promise<WithdrawalPreview | null> {
-  const snapshot = await admin.firestore().doc(`users/${userId}/prepared_withdrawals/${preparedWithdrawalId}`).get();
-
-  if (snapshot.exists) {
-    return snapshot.data() as WithdrawalPreview;
-  } else {
-    return null;
-  }
-}
-
-async function sendPreparedWithdrawal(
-  userId: string,
-  githubId: number,
-  preparedWithdrawal: WithdrawalPreview
-): Promise<[Withdrawal | undefined, undefined | ServiceError]> {
-  const [withdrawal, error] = await TrtlApp.withdraw(preparedWithdrawal.id);
-
-  if (!withdrawal) {
-    return [undefined, error];
-  }
-
-  const docRef = admin.firestore().collection(`accounts/${preparedWithdrawal.accountId}/transactions`).doc();
-  const fee = withdrawal.fees.nodeFee + withdrawal.fees.serviceFee + withdrawal.fees.txFee;
-
-  const transaction: Transaction = {
-    id:             docRef.id,
-    userId:         userId,
-    accountId:      withdrawal.accountId,
-    githubId:       githubId,
-    timestamp:      withdrawal.timestamp,
-    transferType:   'withdrawal',
-    amount:         -withdrawal.amount,
-    fee:            -fee,
-    status:         'confirming',
-    sendAddress:    withdrawal.address,
-    withdrawalId:   withdrawal.id,
-    txHash:         withdrawal.txHash,
-    paymentId:      withdrawal.paymentId
-  }
-
-  await Promise.all([
-    docRef.set(transaction),
-    db.refreshAccount(preparedWithdrawal.accountId)
-  ]);
-
-  return [withdrawal, undefined];
+  return db.prepareWithdrawal(appUser.accountId, amount, address);
 }

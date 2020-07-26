@@ -21,7 +21,7 @@ const CopyBox = ({ data }) => {
   return (
     <div className={styles.box}>
       <div className={styles.item}>
-        <p>{data}</p>
+        {data}
       </div>
       <div className={styles.btn}>
       <CopyToClipboard text={data} onCopy={copyAddressHandler}>

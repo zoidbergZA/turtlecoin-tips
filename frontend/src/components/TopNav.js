@@ -24,13 +24,13 @@ const TopNav = () => {
     <Navbar fixed="top" active={dropdownOpen}>
       <Navbar.Brand>
         <Navbar.Item renderAs={Link} to="/">
-          <img src={logo} alt="logo" width="28" height="28" /><p>tips</p>
+          <img src={logo} alt="logo" width="28" height="28" /><span>tips</span>
         </Navbar.Item>
         <Navbar.Burger onClick={menuClickHandler} />
       </Navbar.Brand>
       <Navbar.Menu>
         <Navbar.Container position="end">
-          <Navbar.Item renderAs="p">
+          <Navbar.Item renderAs="span">
             {currentUser.username}
           </Navbar.Item>
           <Navbar.Item onClick={() => app.auth().signOut()}>

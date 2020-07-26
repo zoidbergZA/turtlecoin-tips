@@ -10,6 +10,7 @@ import Login from './components/Login';
 import Withdraw from './components/Withdraw/Withdraw';
 import History from './components/History/History';
 import Help from 'components/Help';
+import PrivacyPolicy from 'components/PrivacyPolicy';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
               <PrivateRoute exact path="/help" component={Help}/>
             </TurtleAccountProvider>
             <Route exact path="/login" component={Login}/>
+            <Route exact path="/privacy-policy" component={PrivacyPolicy}/>
           </React.Fragment>
         </Router>
       </AuthProvider>

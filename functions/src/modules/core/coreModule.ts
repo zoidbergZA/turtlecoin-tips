@@ -1,7 +1,10 @@
 import * as admin from 'firebase-admin';
+import * as functions from 'firebase-functions';
+import * as crypto from 'crypto';
 import { TrtlApp, Account, ServiceError, WithdrawalPreview, Withdrawal } from 'trtl-apps';
-import { AppError } from './appError';
-import { Config, Transaction } from './types';
+import { processWebhookCall } from './trtlAppsWebhook';
+import { AppError } from '../../appError';
+import { Config, Transaction } from '../../types';
 
 export async function getConfig(): Promise<[Config | undefined, undefined | AppError]> {
   const snapshot = await admin.firestore().doc('globals/config').get();
@@ -104,4 +107,31 @@ export async function sendPreparedWithdrawal(
   ]);
 
   return [withdrawal, undefined];
+}
+
+export const trtlAppsWebhook = functions.https.onRequest(async (request: functions.https.Request, response: functions.Response) => {
+  if (!validateWebhookCall(request)) {
+    response.status(403).send('Unauthorized.');
+    return;
+  }
+
+  await processWebhookCall(request.body);
+  response.status(200).send('OK');
+});
+
+function validateWebhookCall(request: functions.https.Request): boolean {
+  const requestSignature = request.get('x-trtl-apps-signature');
+
+  if (!requestSignature) {
+    return false;
+  }
+
+  const trtlAppsConfig = functions.config().trtl;
+
+  const hash = 'sha256=' + crypto
+                .createHmac("sha256", trtlAppsConfig.app_secret)
+                .update(JSON.stringify(request.body))
+                .digest("hex");
+
+  return hash === requestSignature;
 }

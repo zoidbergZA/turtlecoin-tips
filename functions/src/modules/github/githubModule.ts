@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
-import * as db from '../../database';
+import * as core from '../core/coreModule';
 import * as bot from './bot/bot';
 import groupBy from 'lodash.groupby';
 import { DocumentData, Query } from '@google-cloud/firestore';
@@ -274,8 +274,8 @@ async function refundUnclaimedTip(unclaimedTip: UnclaimedTip): Promise<void> {
 
     const promisses: Promise<any>[] = [];
 
-    promisses.push(db.refreshAccount(unclaimedTip.senderId));
-    promisses.push(db.refreshAccount(recipientAccountId));
+    promisses.push(core.refreshAccount(unclaimedTip.senderId));
+    promisses.push(core.refreshAccount(recipientAccountId));
 
     // create 'tipRefund' transaction doc in original sender's history
     const refundDocRef = admin.firestore().collection(`accounts/${unclaimedTip.senderId}/transactions`).doc();

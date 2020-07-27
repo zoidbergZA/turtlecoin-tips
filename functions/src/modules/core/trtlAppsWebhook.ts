@@ -1,9 +1,7 @@
 import * as admin from 'firebase-admin';
-import * as functions from 'firebase-functions';
-import * as db from '../database';
-import * as crypto from 'crypto';
+import * as core from './coreModule';
 import { Withdrawal, Deposit } from "trtl-apps";
-import { Transaction } from "../types";
+import { Transaction } from "../../types";
 
 type CallbackCode =   'deposit/confirming'      |
                       'deposit/succeeded'       |
@@ -11,34 +9,7 @@ type CallbackCode =   'deposit/confirming'      |
                       'withdrawal/succeeded'    |
                       'withdrawal/failed'
 
-const turtleConfig = functions.config().trtl;
-
-export const webhook = functions.https.onRequest(async (request: functions.https.Request, response: functions.Response) => {
-  if (!validateWebhookCall(request)) {
-    response.status(403).send('Unauthorized.');
-    return;
-  }
-
-  await processWebhookCall(request.body);
-  response.status(200).send('OK');
-});
-
-function validateWebhookCall(request: functions.https.Request): boolean {
-  const requestSignature = request.get('x-trtl-apps-signature');
-
-  if (!requestSignature) {
-    return false;
-  }
-
-  const hash = 'sha256=' + crypto
-                .createHmac("sha256", turtleConfig.app_secret)
-                .update(JSON.stringify(request.body))
-                .digest("hex");
-
-  return hash === requestSignature;
-}
-
-async function processWebhookCall(requestBody: any): Promise<void> {
+export async function processWebhookCall(requestBody: any): Promise<void> {
   const code: CallbackCode | undefined = requestBody.code;
   const data: any = requestBody.data;
 
@@ -74,7 +45,7 @@ async function processWebhookCall(requestBody: any): Promise<void> {
 async function proccesConfirmingDeposit(deposit: Deposit): Promise<void> {
   console.log(`process confirming deposit: ${deposit.id}`);
 
-  await db.refreshAccount(deposit.accountId);
+  await core.refreshAccount(deposit.accountId);
 
   if (!deposit.txHash) {
     console.log('missing deposit tx hash!');
@@ -102,7 +73,7 @@ async function proccesConfirmingDeposit(deposit: Deposit): Promise<void> {
 async function processSuccessfulDeposit(deposit: Deposit): Promise<void> {
   console.log(`process successful deposit: ${deposit.id}`);
 
-  await db.refreshAccount(deposit.accountId);
+  await core.refreshAccount(deposit.accountId);
 
   const snapshot = await admin.firestore()
                     .collection(`accounts/${deposit.accountId}/transactions`)
@@ -128,7 +99,7 @@ async function processSuccessfulDeposit(deposit: Deposit): Promise<void> {
 async function processCancelledDeposit(deposit: Deposit): Promise<void> {
   console.log(`process cancelled deposit: ${deposit.id}`);
 
-  await db.refreshAccount(deposit.accountId);
+  await core.refreshAccount(deposit.accountId);
 
   const snapshot = await admin.firestore()
                     .collection(`accounts/${deposit.accountId}/transactions`)
@@ -154,7 +125,7 @@ async function processCancelledDeposit(deposit: Deposit): Promise<void> {
 async function processWithdrawalSucceeded(withdrawal: Withdrawal): Promise<void> {
   console.log(`process withdrawal succeeded: ${withdrawal.id}`);
 
-  await db.refreshAccount(withdrawal.accountId);
+  await core.refreshAccount(withdrawal.accountId);
 
   const snapshot = await admin.firestore()
                     .collection(`accounts/${withdrawal.accountId}/transactions`)
@@ -180,7 +151,7 @@ async function processWithdrawalSucceeded(withdrawal: Withdrawal): Promise<void>
 async function processWithdrawalFailed(withdrawal: Withdrawal): Promise<void> {
   console.log(`process cancelled deposit: ${withdrawal.id}`);
 
-  await db.refreshAccount(withdrawal.accountId);
+  await core.refreshAccount(withdrawal.accountId);
 
   const snapshot = await admin.firestore()
                     .collection(`accounts/${withdrawal.accountId}/transactions`)

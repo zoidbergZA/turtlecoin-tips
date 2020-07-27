@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
-import * as db from '../database';
+import * as core from './core/coreModule';
 import { onAuthUserCreated as newGithubAuthUser } from './github/githubModule';
 import { AppError } from '../appError';
 import { WithdrawalPreview, ServiceError } from 'trtl-apps';
@@ -74,13 +74,13 @@ export const userWithdraw = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('not-found', 'user account not found.');
   }
 
-  const preparedWithdrawal = await db.getPreparedWithdrawal(appUser.accountId, preparedWithdrawalId);
+  const preparedWithdrawal = await core.getPreparedWithdrawal(appUser.accountId, preparedWithdrawalId);
 
   if (!preparedWithdrawal) {
     throw new functions.https.HttpsError('not-found', 'Prepared withdrawal not found.');
   }
 
-  const [withdrawal, error] = await db.sendPreparedWithdrawal(preparedWithdrawal);
+  const [withdrawal, error] = await core.sendPreparedWithdrawal(preparedWithdrawal);
 
   if (withdrawal) {
     return withdrawal;
@@ -129,5 +129,5 @@ async function prepareWithdrawToAddress(
     return [undefined, new AppError('app/user-no-account', `app user ${appUser.uid} doesn't have a turtle account id assigned!`)];
   }
 
-  return db.prepareWithdrawal(appUser.accountId, amount, address);
+  return core.prepareWithdrawal(appUser.accountId, amount, address);
 }

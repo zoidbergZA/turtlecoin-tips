@@ -8,7 +8,7 @@ import { getGithubIdByUsername, getWebAppUserByGithubId,
 import { TipCommandInfo, Transaction } from '../../../types';
 import { AppError } from '../../../appError';
 import { getAccountOwner } from '../../webAppModule';
-import * as db from '../../../database';
+import * as core from '../../core/coreModule';
 
 const webAppUrl = functions.config().frontend.url;
 
@@ -75,7 +75,7 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
     return `@${tipCommand.senderUsername} you don't have a tips account set up yet! Visit ${webAppUrl} to get started.`;
   }
 
-  const [config, configError] = await db.getConfig();
+  const [config, configError] = await core.getConfig();
 
   if (!config) {
     console.log((configError as AppError).message);
@@ -146,8 +146,8 @@ async function proccessTipCommand(tipCommand: TipCommandInfo): Promise<string> {
   await Promise.all([
     senderTxRef.set(senderTx),
     recipientTxRef.set(recipientTx),
-    db.refreshAccount(senderAccount.id),
-    db.refreshAccount(recipientAccountId)
+    core.refreshAccount(senderAccount.id),
+    core.refreshAccount(recipientAccountId)
   ]);
 
   let response = `\`${(tipCommand.amount / 100).toFixed(2)} TRTL\` tip successfully sent to @${tipCommand.recipientUsername}! Visit ${webAppUrl} to manage your tips.`;
@@ -183,7 +183,7 @@ async function getAccountByGithubId(githubId: number): Promise<[Account | undefi
     return [undefined, userError];
   }
 
-  return db.getAccount(githubUser.accountId);
+  return core.getAccount(githubUser.accountId);
 }
 
 function getTipCommandInfo(

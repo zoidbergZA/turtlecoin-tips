@@ -14,4 +14,4 @@ TrtlApp.initialize(turtleConfig.app_id, turtleConfig.app_secret);
 
 export const webApp = webAppModule;
 export const github = githubModule;
-export { webhook as trtlAppsWebhook } from './modules/trtlAppsWebhook';
+export { trtlAppsWebhook } from './modules/core/coreModule';

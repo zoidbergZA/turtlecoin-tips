@@ -1,17 +1,11 @@
 import React, { useState } from 'react';
-import styles from './withdraw.module.scss';
-import { Link } from 'react-router-dom';
 import Section from 'react-bulma-components/lib/components/section';
 import Container from 'react-bulma-components/lib/components/container';
-import Button from 'react-bulma-components/lib/components/button';
-import Heading from 'react-bulma-components/lib/components/heading';
-import Level from 'react-bulma-components/lib/components/level';
 import Spinner from '../Spinner/Spinner';
-import CopyBox from '../CopyBox/CopyBox';
 import app from '../../base';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPaperPlane, faChevronLeft, faCheck } from '@fortawesome/free-solid-svg-icons';
 import WithdrawForm from './WithdrawForm/WithdrawForm';
+import WithdrawPreview from './WithdrawPreview/WithdrawPreview';
+import WithdrawResult from './WithdrawResult/WithdrawResult';
 
 const Withdraw = () => {
   const [busyMessage, setBusyMessage]   = useState(null);
@@ -19,13 +13,13 @@ const Withdraw = () => {
   const [preparedTx, setPreparedTx]     = useState(null);
   const [withdrawal, setWithdrawal]     = useState(null);
 
-  const onSubmit = async (data) => {
+  const prepareWithdrawal = async (data) => {
     setErrorMessage(null);
     setBusyMessage('preparing transaction...');
 
     try {
-      const prepareWithdrawal = app.functions().httpsCallable('webApp-userPrepareWithdrawal');
-      const prepareResult = await prepareWithdrawal({
+      const prepare = app.functions().httpsCallable('webApp-userPrepareWithdrawal');
+      const prepareResult = await prepare({
         address: data.address,
         amount: Math.ceil(data.amount * 100)
       });
@@ -38,9 +32,7 @@ const Withdraw = () => {
     }
   };
 
-  const onConfirm = async () => {
-    setBusyMessage('sending transaction...');
-
+  const sendWithdrawal = async () => {
     try {
       const sendWithdrawal = app.functions().httpsCallable('webApp-userWithdraw');
       const sendResult = await sendWithdrawal({ preparedTxId: preparedTx.id });
@@ -54,7 +46,7 @@ const Withdraw = () => {
     }
   }
 
-  const onBack = () => {
+  const reset = () => {
     setPreparedTx(null);
   }
 
@@ -71,69 +63,14 @@ const Withdraw = () => {
   }
 
   if (withdrawal) {
-    return (
-      <Section>
-        <Container>
-          <Heading>Transaction sent!</Heading>
-          <p>hash:</p>
-          <div style={{ maxWidth: "600px", display: "inline-block" }}>
-            <CopyBox data={withdrawal.txHash}></CopyBox>
-          </div>
-          <Section>
-            <Button to="/" renderAs={Link}>
-              <FontAwesomeIcon icon={faCheck}></FontAwesomeIcon>
-              <span className="btn-icon-text">done</span>
-            </Button>
-          </Section>
-          </Container>
-      </Section>
-    );
+    return <WithdrawResult withdrawal={withdrawal} />
   }
 
   if (preparedTx) {
-    const fees = preparedTx.fees.nodeFee + preparedTx.fees.serviceFee + preparedTx.fees.txFee;
-
-    return (
-      <Section>
-        <Container>
-          <Heading>Confirm send</Heading>
-          <p className="address-text">{preparedTx.address}</p>
-          <div className={styles["amounts-box"]}>
-            <table>
-            <tbody>
-              <tr>
-                <td className={styles["tbl-label"]}>amount:</td>
-                <td className={styles["tbl-value"]}>{preparedTx.amount / 100} TRTL</td>
-              </tr>
-              <tr>
-                <td className={styles["tbl-label"]}>fee:</td>
-                <td className={styles["tbl-value"]}>{fees / 100} TRTL</td>
-              </tr>
-            </tbody>
-          </table>
-          </div>
-          <Section>
-            <Level>
-              <Level.Item type="left">
-                <Button onClick={onBack}>
-                  <FontAwesomeIcon icon={faChevronLeft}></FontAwesomeIcon>
-                  <span className="btn-icon-text">back</span>
-                </Button>
-              </Level.Item>
-              <Level.Item type="right">
-                <Button onClick={onConfirm} color="primary">
-                  <FontAwesomeIcon icon={faPaperPlane}></FontAwesomeIcon>
-                  <span className="btn-icon-text">confirm</span>
-                </Button>
-              </Level.Item>
-            </Level>
-          </Section>
-        </Container>
-      </Section>
-    );
+    return <WithdrawPreview preparedTx={preparedTx} onConfirm={sendWithdrawal} onBack={reset} />
   }
 
-  return <WithdrawForm errorMessage={errorMessage} onSubmit={onSubmit}></WithdrawForm>
+  return <WithdrawForm errorMessage={errorMessage} onSubmit={prepareWithdrawal} />
 };
 
 export default Withdraw;

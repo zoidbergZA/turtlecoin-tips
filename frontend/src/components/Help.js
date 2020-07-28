@@ -18,7 +18,7 @@ const Help = () => {
           <Message.Header>.tip</Message.Header>
           <Message.Body>
             Use this command to send a tip to a Github user. Simply comment on an open issue on
-            Github repo where this bot is added with the tip amount and mention the user to send the tip to:
+            Github repo where this bot is added with the tip amount and mention the user to send the tip to, for example:
             <div style={{ paddingTop: "20px" }}>
               <Tag>.tip 4.20 @username</Tag>
             </div>

@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import styles from './withdraw.module.scss';
 import { Link } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
-import * as Form from 'react-bulma-components/lib/components/form';
 import Section from 'react-bulma-components/lib/components/section';
 import Container from 'react-bulma-components/lib/components/container';
 import Button from 'react-bulma-components/lib/components/button';
@@ -12,15 +10,14 @@ import Spinner from '../Spinner/Spinner';
 import CopyBox from '../CopyBox/CopyBox';
 import app from '../../base';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPaperPlane, faChevronLeft, faChevronRight, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faChevronLeft, faCheck } from '@fortawesome/free-solid-svg-icons';
+import WithdrawForm from './WithdrawForm/WithdrawForm';
 
 const Withdraw = () => {
   const [busyMessage, setBusyMessage]   = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
   const [preparedTx, setPreparedTx]     = useState(null);
   const [withdrawal, setWithdrawal]     = useState(null);
-  const [errorMessage, setErrorMessage] = useState(null);
-
-  const { handleSubmit, errors, control, formState } = useForm({ mode: 'onChange' });
 
   const onSubmit = async (data) => {
     setErrorMessage(null);
@@ -85,7 +82,7 @@ const Withdraw = () => {
           <Section>
             <Button to="/" renderAs={Link}>
               <FontAwesomeIcon icon={faCheck}></FontAwesomeIcon>
-              <span className={styles["btn-icon-text"]}>done</span>
+              <span className="btn-icon-text">done</span>
             </Button>
           </Section>
           </Container>
@@ -120,13 +117,13 @@ const Withdraw = () => {
               <Level.Item type="left">
                 <Button onClick={onBack}>
                   <FontAwesomeIcon icon={faChevronLeft}></FontAwesomeIcon>
-                  <span className={styles["btn-icon-text"]}>back</span>
+                  <span className="btn-icon-text">back</span>
                 </Button>
               </Level.Item>
               <Level.Item type="right">
                 <Button onClick={onConfirm} color="primary">
                   <FontAwesomeIcon icon={faPaperPlane}></FontAwesomeIcon>
-                  <span className={styles["btn-icon-text"]}>confirm</span>
+                  <span className="btn-icon-text">confirm</span>
                 </Button>
               </Level.Item>
             </Level>
@@ -136,72 +133,7 @@ const Withdraw = () => {
     );
   }
 
-  return (
-    <Section>
-      <Container>
-        <Heading>Withdraw</Heading>
-        {
-          !!errorMessage &&
-          <p style={{ color: "red" }}>{errorMessage}</p>
-        }
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Form.Field>
-            <label>Address</label>
-            <Form.Control>
-              <Controller
-                as={Form.Input}
-                name="address"
-                placeholder="TRTL address"
-                defaultValue=""
-                control={control}
-                rules={{ required: true }}
-              />
-            </Form.Control>
-            <Form.Help color="danger">
-              {errors.FirstName && "This field is required"}
-            </Form.Help>
-          </Form.Field>
-          <Form.Field style={{ maxWidth: "400px", display: "inline-block" }}>
-            <label>Amount</label>
-            <Form.Control>
-              <Controller
-                as={Form.Input}
-                name="amount"
-
-                control={control}
-                defaultValue=""
-                placeholder="0.00"
-                rules={{ required: true }}
-              />
-            </Form.Control>
-          </Form.Field>
-          <Form.Field>
-            <Level>
-            <Level.Item type="left">
-              <Button to="/" renderAs={Link}>
-                <FontAwesomeIcon icon={faChevronLeft}></FontAwesomeIcon>
-                <span className={styles["btn-icon-text"]}>back</span>
-              </Button>
-            </Level.Item>
-            <Level.Item type="right">
-            <Form.Control>
-              <Button
-                color="primary"
-                type="submit"
-                value="Submit"
-                disabled={!formState.isValid}
-              >
-                <FontAwesomeIcon icon={faChevronRight}></FontAwesomeIcon>
-                <span className={styles["btn-icon-text"]}>continue</span>
-              </Button>
-            </Form.Control>
-            </Level.Item>
-            </Level>
-          </Form.Field>
-        </form>
-      </Container>
-    </Section>
-  );
+  return <WithdrawForm errorMessage={errorMessage} onSubmit={onSubmit}></WithdrawForm>
 };
 
 export default Withdraw;

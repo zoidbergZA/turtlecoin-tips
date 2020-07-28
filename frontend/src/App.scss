@@ -1,5 +1,9 @@
 @import "~react-bulma-components/src/index.sass";
 
+p {
+  margin-top: 20px;
+}
+
 .App {
   text-align: center;
 }
@@ -13,6 +17,6 @@
   padding: 10px;
 }
 
-p {
-  margin-top: 20px;
+.btn-icon-text {
+  padding-left: 10px;
 }

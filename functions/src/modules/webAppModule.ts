@@ -80,7 +80,7 @@ export const userWithdraw = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('not-found', 'Prepared withdrawal not found.');
   }
 
-  const [withdrawal, error] = await core.sendPreparedWithdrawal(preparedWithdrawal);
+  const [withdrawal, error] = await core.sendPreparedWithdrawal(preparedWithdrawal, 'github');
 
   if (withdrawal) {
     return withdrawal;

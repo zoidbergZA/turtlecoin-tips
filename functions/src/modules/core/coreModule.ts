@@ -4,7 +4,7 @@ import * as crypto from 'crypto';
 import { TrtlApp, Account, ServiceError, WithdrawalPreview, Withdrawal } from 'trtl-apps';
 import { processWebhookCall } from './trtlAppsWebhook';
 import { AppError } from '../../appError';
-import { Config, Transaction } from '../../types';
+import { Config, Transaction, Platform } from '../../types';
 
 export async function getConfig(): Promise<[Config | undefined, undefined | AppError]> {
   const snapshot = await admin.firestore().doc('globals/config').get();
@@ -76,7 +76,8 @@ export async function getPreparedWithdrawal(
 }
 
 export async function sendPreparedWithdrawal(
-  preparedWithdrawal: WithdrawalPreview
+  preparedWithdrawal: WithdrawalPreview,
+  platform: Platform
 ): Promise<[Withdrawal | undefined, undefined | ServiceError]> {
   const [withdrawal, error] = await TrtlApp.withdraw(preparedWithdrawal.id);
 
@@ -92,6 +93,7 @@ export async function sendPreparedWithdrawal(
     accountId:      withdrawal.accountId,
     timestamp:      withdrawal.timestamp,
     transferType:   'withdrawal',
+    platform:       platform,
     amount:         -withdrawal.amount,
     fee:            -fee,
     status:         'confirming',

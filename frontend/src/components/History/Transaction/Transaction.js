@@ -44,11 +44,15 @@ function getInfoText(tx) {
 }
 
 function getAmountText(tx) {
-  let prefix = tx.amount < 0 ? '' : '+';
+  let text = tx.amount < 0 ? '' : '+';
 
-  const amount = `${((tx.amount + tx.fee) / 100).toFixed(2)} TRTL`
+  text += `${((tx.amount + tx.fee) / 100).toFixed(2)} TRTL`
 
-  return `${prefix}${amount}`;
+  if (tx.status === 'confirming') {
+    text += ' (confirming)';
+  }
+
+  return text;
 }
 
 function convertTimestamp(timestamp) {

@@ -15,13 +15,21 @@ const Withdraw = () => {
 
   const prepareWithdrawal = async (data) => {
     setErrorMessage(null);
+
+    const amount = Math.ceil(data.amount * 100);
+
+    if (Number.isNaN(amount)) {
+      setErrorMessage('Invalid amount specified.');
+      return;
+    }
+
     setBusyMessage('preparing transaction...');
 
     try {
       const prepare = app.functions().httpsCallable('webApp-userPrepareWithdrawal');
       const prepareResult = await prepare({
         address: data.address,
-        amount: Math.ceil(data.amount * 100)
+        amount: amount
       });
 
       setPreparedTx(prepareResult.data);
@@ -34,6 +42,8 @@ const Withdraw = () => {
 
   const sendWithdrawal = async () => {
     try {
+      setBusyMessage('sending transaction...');
+
       const sendWithdrawal = app.functions().httpsCallable('webApp-userWithdraw');
       const sendResult = await sendWithdrawal({ preparedTxId: preparedTx.id });
 

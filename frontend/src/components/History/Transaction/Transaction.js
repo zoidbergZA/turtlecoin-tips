@@ -10,15 +10,12 @@ const Transaction = ({ tx }) => {
     amountStyles.push(styles.faded);
   }
 
-
-
-
   return (
     <tr className={styles.text}>
       <td className={styles.date}>{convertTimestamp(tx.timestamp)}</td>
       <td>{tx.transferType}</td>
       <td><div className={txInfoStyles.join(' ')}>{getInfoText(tx)}</div></td>
-      <td className={amountStyles.join(' ')}>{getAmountText(tx)}</td>
+      <td style={{ textAlign: "right" }} className={amountStyles.join(' ')}>{getAmountText(tx)}</td>
     </tr>
   );
 }
@@ -44,13 +41,13 @@ function getInfoText(tx) {
 }
 
 function getAmountText(tx) {
-  let text = tx.amount < 0 ? '' : '+';
+  let text = tx.status === 'confirming' ? "(confirming) " : "";
 
-  text += `${((tx.amount + tx.fee) / 100).toFixed(2)} TRTL`
-
-  if (tx.status === 'confirming') {
-    text += ' (confirming)';
+  if (tx.amount > 0) {
+    text += '+';
   }
+
+  text += `${((tx.amount + tx.fee) / 100).toFixed(2)} TRTL`;
 
   return text;
 }

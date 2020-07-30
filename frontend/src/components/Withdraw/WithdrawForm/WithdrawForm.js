@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import * as Form from 'react-bulma-components/lib/components/form';
@@ -11,7 +11,27 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 const WithdrawForm = ({ errorMessage, onSubmit }) => {
-  const { handleSubmit, errors, control, formState } = useForm({ mode: 'onChange' });
+  const { handleSubmit, errors, control, formState, setValue } = useForm({ mode: 'onChange' });
+  const [oldAmount, setOldAmount] = useState(undefined);
+
+  const amountRegex =/^(\d+(\.\d{0,2})?|\.?\d{1,2})$/;
+
+  const AmountInputHandler = (target) => {
+    const value = target.value;
+
+    if (value === undefined || value === '') {
+      setOldAmount(undefined);
+      return;
+    }
+
+    const valid = amountRegex.test(value);
+
+    if (!valid) {
+      setValue('amount', oldAmount);
+    } else {
+      setOldAmount(value);
+    }
+  }
 
   return (
     <Section>
@@ -40,13 +60,11 @@ const WithdrawForm = ({ errorMessage, onSubmit }) => {
           </Form.Field>
           <Form.Field style={{ maxWidth: "400px", display: "inline-block" }}>
             <label>Amount</label>
-            <Form.Control>
+            <Form.Control onChange={e => AmountInputHandler(e.target)}>
               <Controller
                 as={Form.Input}
                 name="amount"
-
                 control={control}
-                defaultValue=""
                 placeholder="0.00"
                 rules={{ required: true }}
               />

@@ -12,7 +12,7 @@ const WithdrawResult = ({ withdrawal }) => {
   return (
     <Section>
       <Container>
-        <Heading>Transaction sent!</Heading>
+        <Heading>Transaction successfully submitted for processing!</Heading>
         <p>hash:</p>
         <div style={{ maxWidth: "600px", display: "inline-block" }}>
           <CopyBox data={withdrawal.txHash}></CopyBox>

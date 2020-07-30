@@ -13,7 +13,6 @@ import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons
 const WithdrawForm = ({ errorMessage, onSubmit }) => {
   const { handleSubmit, errors, control, formState, setValue } = useForm({ mode: 'onChange' });
   const [oldAmount, setOldAmount] = useState(undefined);
-
   const amountRegex =/^(\d+(\.\d{0,2})?|\.?\d{1,2})$/;
 
   const AmountInputHandler = (target) => {
@@ -24,9 +23,7 @@ const WithdrawForm = ({ errorMessage, onSubmit }) => {
       return;
     }
 
-    const valid = amountRegex.test(value);
-
-    if (!valid) {
+    if (!amountRegex.test(value)) {
       setValue('amount', oldAmount);
     } else {
       setOldAmount(value);

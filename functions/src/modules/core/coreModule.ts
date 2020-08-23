@@ -37,6 +37,10 @@ export async function refreshAccount(accountId: string): Promise<void> {
   await admin.firestore().doc(`accounts/${accountId}`).set(account);
 }
 
+export async function accountTransfer(fromId: string, toId: string, amount: number) {
+  return TrtlApp.transfer(fromId, toId, amount);
+}
+
 export async function prepareWithdrawal(
   accountId: string,
   amount: number,

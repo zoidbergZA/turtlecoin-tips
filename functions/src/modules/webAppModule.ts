@@ -29,6 +29,60 @@ export const userAgreeDisclaimer = functions.https.onCall(async (data, context) 
   });
 });
 
+export const onAccountWrite = functions.firestore.document('accounts/{accountId}').onWrite(async (change, context) => {
+  // if this account is linked with an app user, update that user's linked account data
+  const account = change.after.exists ? change.after.data() as Account : null;
+
+  if (!account) {
+    return;
+  }
+
+  const linkedAccount = await getLinkedUserTurtleAccount(context.params.accountId);
+
+  if (!linkedAccount) {
+    return;
+  }
+
+  const update: Partial<UserTurtleAccount> = {
+    balanceUnlocked: account.balanceUnlocked
+  }
+
+  await admin.firestore()
+    .doc(`users/${linkedAccount.userId}/turtle_accounts/${linkedAccount.accountId}`)
+    .update(update)
+});
+
+export const onUserTurtleAccountWrite = functions.firestore
+  .document('users/{userId}/turtle_accounts/{accountId}')
+  .onWrite(async (change, context) => {
+  // if this linked account is not the primary linked account, transfer its balance to the primary
+  const linkedAccount = change.after.exists ? change.after.data() as UserTurtleAccount : null;
+
+  if (!linkedAccount || linkedAccount.primary) {
+    return;
+  }
+
+  const primaryAccount = await getLinkedUserTurtleAccount();
+
+  if (!primaryAccount) {
+    console.log(`user [${linkedAccount.userId}] does not have a primary linked account!`);
+    return;
+  }
+
+  // transfer the available balance to the primary linked account
+  const [transfer, err] = await core.accountTransfer(
+                            linkedAccount.accountId,
+                            primaryAccount.accountId,
+                            linkedAccount.balanceUnlocked);
+
+  if (!transfer) {
+    const transferError = err as ServiceError;
+    console.log(transferError.message);
+  }
+
+  console.log(`transferred [${linkedAccount.balanceUnlocked}] from user [${linkedAccount.userId}] linked account [${linkedAccount.accountId}] to primary account [${primaryAccount.accountId}]`);
+});
+
 export const userPrepareWithdrawal = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError('failed-precondition', 'The function must be called while authenticated.');
@@ -147,6 +201,29 @@ export async function linkUserTurtleAccount(appUser: WebAppUser, account: Accoun
   console.log(`linked turtle account [${account.id}] with app user [${appUser.uid}].`);
 
   return true;
+}
+
+/**
+ *
+ * @param accountId if no accountId is provided, will fetch the primary linked account
+ *
+ */
+export async function getLinkedUserTurtleAccount(accountId?: string): Promise<UserTurtleAccount | null> {
+  let query = admin.firestore().collectionGroup('turtle_accounts');
+
+  if (accountId) {
+    query = query.where('accountId', '==', accountId);
+  } else {
+    query = query.where('primary', '==', true);
+  }
+
+  const snapshot = await query.get();
+
+  if (snapshot.size === 0) {
+    return null;
+  }
+
+  return snapshot.docs[0].data() as UserTurtleAccount;
 }
 
 export async function getAccountOwner(accountId: string): Promise<[WebAppUser | undefined, undefined | AppError]> {

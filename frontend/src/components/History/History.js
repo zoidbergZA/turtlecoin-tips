@@ -32,7 +32,6 @@ const History = () => {
         combineLatest(streams).pipe(mergeAll()).subscribe(txs => {
           setTransactions(txs);
         });
-
       });
     }
   }, [currentUser]);

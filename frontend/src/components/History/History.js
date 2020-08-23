@@ -14,10 +14,10 @@ const History = () => {
   const [transactions, setTransactions] = useState(null);
 
   useEffect(() => {
-    if (currentUser && currentUser.accountId) {
+    if (currentUser && currentUser.primaryAccountId) {
       collectionData(
         app.firestore()
-        .collection(`accounts/${currentUser.accountId}/transactions`)
+        .collection(`accounts/${currentUser.primaryAccountId}/transactions`)
         .orderBy('timestamp', 'desc')
         .limit(40)
       ).subscribe(txs => {

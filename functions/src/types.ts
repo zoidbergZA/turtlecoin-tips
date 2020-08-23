@@ -6,8 +6,8 @@ export interface Config {
 
 export interface WebAppUser {
   uid: string;
+  primaryAccountId?: string;
   githubId?: number;
-  accountId?: string;
   username: string;
   disclaimerAccepted: boolean;
 }
@@ -32,10 +32,16 @@ export interface UnclaimedTip extends Transfer {
   senderUsername: string;
 }
 
-export type Platform = 'github';
-
+export type Platform = 'webapp' | 'github';
 export type TransactionType = 'deposit' | 'withdrawal' | 'tip' | 'tipRefund';
 export type TransactionStatus = 'confirming' | 'completed' | 'failed';
+
+export interface UserTurtleAccount {
+  accountId: string;
+  userId: string;
+  primary: boolean;
+  balanceUnlocked: number;
+}
 
 export interface Transaction {
   id: string;

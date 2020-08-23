@@ -1,17 +1,17 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import * as core from './core/coreModule';
-import { onAuthUserCreated as newGithubAuthUser } from './github/githubModule';
+import { onAuthUserCreated as processNewGithubAuthUser } from './github/githubModule';
 import { AppError } from '../appError';
-import { WithdrawalPreview, ServiceError } from 'trtl-apps';
-import { WebAppUser } from '../types';
+import { WithdrawalPreview, ServiceError, Account } from 'trtl-apps';
+import { WebAppUser, UserTurtleAccount } from '../types';
 
 export const onNewAuthUserCreated = functions.auth.user().onCreate(async (user) => {
   console.log(`creating new user => uid: ${user.uid}`);
   console.log(`user provider data: ${JSON.stringify(user.providerData)}`);
 
   if (user.providerData.some(p => p.providerId === 'github.com')) {
-    await newGithubAuthUser(user);
+    await processNewGithubAuthUser(user);
   } else {
     console.log(`unsupported provider: ${JSON.stringify(user.providerData)}, deleting auth user [${user.uid}]...`);
     await admin.auth().deleteUser(user.uid);
@@ -70,17 +70,23 @@ export const userWithdraw = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('not-found', (userError as AppError).message);
   }
 
-  if (!appUser.accountId) {
+  if (!appUser.primaryAccountId) {
+    throw new functions.https.HttpsError('not-found', 'User does not have a primary turtle account.');
+  }
+
+  const [primaryAccount] = await core.getAccount(appUser.primaryAccountId);
+
+  if (!primaryAccount) {
     throw new functions.https.HttpsError('not-found', 'user account not found.');
   }
 
-  const preparedWithdrawal = await core.getPreparedWithdrawal(appUser.accountId, preparedWithdrawalId);
+  const preparedWithdrawal = await core.getPreparedWithdrawal(primaryAccount.id, preparedWithdrawalId);
 
   if (!preparedWithdrawal) {
     throw new functions.https.HttpsError('not-found', 'Prepared withdrawal not found.');
   }
 
-  const [withdrawal, error] = await core.sendPreparedWithdrawal(preparedWithdrawal, 'github');
+  const [withdrawal, error] = await core.sendPreparedWithdrawal(preparedWithdrawal, 'webapp');
 
   if (withdrawal) {
     return withdrawal;
@@ -89,19 +95,73 @@ export const userWithdraw = functions.https.onCall(async (data, context) => {
   }
 });
 
-export async function getAccountOwner(accountId: string): Promise<[WebAppUser | undefined, undefined | AppError]> {
-  console.log(`get AppUser by accountId: [${accountId}]...`);
+export async function linkUserTurtleAccount(appUser: WebAppUser, account: Account): Promise<boolean> {
+  // check if account is already linked with a user
+  const matchQuery = await admin.firestore().collectionGroup('turtle_accounts')
+                      .where('accountId', '==', account.id)
+                      .get();
 
+  if (matchQuery.size > 0) {
+    const matchedAccount = matchQuery.docs[0].data() as UserTurtleAccount;
+    console.log(`turtle account [${matchedAccount.accountId}] already linked to user [${appUser.uid}]!`);
+
+    return false;
+  }
+
+  // check if this should be the user's primary account
   const snapshot = await admin.firestore()
-                    .collection('users')
-                    .where('accountId', '==', accountId)
+                    .collection(`users/${appUser.uid}/turtle_accounts`)
+                    .where('primary', '==', true)
                     .get();
 
-  if (snapshot.size !== 1) {
+  const isPrimary = snapshot.size === 0;
+  const promises: Promise<any>[] = [];
+
+  // add account to user's list of turtle_accounts
+  const userTurtleAccount: UserTurtleAccount = {
+    accountId: account.id,
+    userId: appUser.uid,
+    primary: isPrimary,
+    balanceUnlocked: account.balanceUnlocked
+  }
+
+  const addAccountPromise = admin.firestore()
+    .doc(`users/${appUser.uid}/turtle_accounts/${account.id}`)
+    .set(userTurtleAccount);
+
+  promises.push(addAccountPromise);
+
+  if (isPrimary) {
+    const userUpdate: Partial<WebAppUser> = {
+      primaryAccountId: account.id
+    }
+
+    const updateUserPromise = admin.firestore()
+      .doc(`users/${appUser.uid}`)
+      .update(userUpdate);
+
+    promises.push(updateUserPromise);
+  }
+
+  await Promise.all(promises);
+  console.log(`linked turtle account [${account.id}] with app user [${appUser.uid}].`);
+
+  return true;
+}
+
+export async function getAccountOwner(accountId: string): Promise<[WebAppUser | undefined, undefined | AppError]> {
+  const accountsSnapshot = await admin.firestore()
+                            .collectionGroup('turtle_accounts')
+                            .where('accountId', '==', accountId)
+                            .get();
+
+  if (accountsSnapshot.size === 0) {
     return [undefined, new AppError('app/user-not-found')];
   }
 
-  return [snapshot.docs[0].data() as WebAppUser, undefined];
+  const account = accountsSnapshot.docs[0].data() as UserTurtleAccount;
+
+  return getAppUserByUid(account.userId);
 }
 
 async function getAppUserByUid(uid: string): Promise<[WebAppUser | undefined, undefined | AppError]> {
@@ -125,9 +185,15 @@ async function prepareWithdrawToAddress(
     return [undefined, userError];
   }
 
-  if (!appUser.accountId) {
-    return [undefined, new AppError('app/user-no-account', `app user ${appUser.uid} doesn't have a turtle account id assigned!`)];
+  if (!appUser.primaryAccountId) {
+    throw new functions.https.HttpsError('not-found', 'User does not have a primary turtle account.');
   }
 
-  return core.prepareWithdrawal(appUser.accountId, amount, address);
+  const [primaryAccount] = await core.getAccount(appUser.primaryAccountId);
+
+  if (!primaryAccount) {
+    return [undefined, new AppError('app/user-no-account', `app user ${appUser.uid} doesn't have a turtle account assigned!`)];
+  }
+
+  return core.prepareWithdrawal(primaryAccount.id, amount, address);
 }

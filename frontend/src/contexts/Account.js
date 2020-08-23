@@ -10,8 +10,8 @@ export const TurtleAccountProvider = ({ children }) => {
   const [turtleAccount, setTurtleAccount] = useState(null);
 
   useEffect(() => {
-    if (currentUser && currentUser.accountId) {
-      doc(app.firestore().doc(`accounts/${currentUser.accountId}`)).subscribe(accountDoc => {
+    if (currentUser && currentUser.primaryAccountId) {
+      doc(app.firestore().doc(`accounts/${currentUser.primaryAccountId}`)).subscribe(accountDoc => {
         const account = accountDoc.data();
         setTurtleAccount(account);
       })

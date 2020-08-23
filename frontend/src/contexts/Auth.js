@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }) => {
   const [pending, setPending] = useState(true);
 
   useEffect(() => {
+    // TODO: cleanup observable
     authState(app.auth())
     .pipe(
       switchMap(u => {

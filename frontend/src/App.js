@@ -21,13 +21,13 @@ function App() {
           <React.Fragment>
             <TopNav />
             <TurtleAccountProvider>
+              <Route exact path="/login" component={Login}/>
               <PrivateRoute exact path="/" component={Home}/>
               <PrivateRoute exact path="/withdraw" component={Withdraw}/>
               <PrivateRoute exact path="/history" component={History}/>
               <PrivateRoute exact path="/help" component={Help}/>
             </TurtleAccountProvider>
             <Route exact path="/start" component={Start}/>
-            <Route exact path="/login" component={Login}/>
             <Route exact path="/privacy-policy" component={PrivacyPolicy}/>
           </React.Fragment>
         </Router>

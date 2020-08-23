@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import app from '../../base';
 import * as firebase from 'firebase/app';
-// import { AuthContext } from '../../contexts/Auth';
+import { Redirect } from 'react-router';
+import { TurtleAccountContext } from '../../contexts/Account'
 import Heading from 'react-bulma-components/lib/components/heading';
 import Section from 'react-bulma-components/lib/components/section';
 import Container from 'react-bulma-components/lib/components/container';
 import CreateAccountForm from './CreateAccountForm';
 import Spinner from '../Spinner/Spinner';
 
-const Login = ({ history }) => {
-  // const { currentUser } = useContext(AuthContext);
+const Login = () => {
+  const { turtleAccount } = useContext(TurtleAccountContext);
   const [errorMessage, setErrorMessage] = useState(null);
   const [busyMessage, setBusyMessage]   = useState(null);
 
@@ -26,12 +27,9 @@ const Login = ({ history }) => {
     try {
       app.auth().setPersistence(firebase.auth.Auth.Persistence.NONE).then(() => {
         app.auth().createUserWithEmailAndPassword(data.email, data.password).then(function(result) {
-          // TODO: maybe set busy here and wait for auth user redirect?
-          history.push('/');
-          setBusyMessage(null);
+          // wait for new turtle account to be created before redirecting...
         }).catch(function(error) {
-          console.error(`${error.errorCode} :: ${error.errorMessage}`);
-          setErrorMessage(error.errorMessage);
+          setErrorMessage(error.message);
           setBusyMessage(null);
         });
       });
@@ -39,6 +37,10 @@ const Login = ({ history }) => {
       setErrorMessage(error.message);
       setBusyMessage(null);
     }
+  }
+
+  if (turtleAccount) {
+    return <Redirect to="/" />;
   }
 
   if (busyMessage) {

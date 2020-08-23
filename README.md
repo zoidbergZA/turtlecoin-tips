@@ -28,7 +28,7 @@ firebase functions:config:set frontend.url="https://example.com"
 
 ## Project structure
 
-The tip bot frontend React app can be found in the `/frontend` folder.
+The frontend React app can be found in the `/frontend` folder.
 
 The backend code is located in the `/functions` folder.
 
@@ -40,9 +40,17 @@ key: `FIREBASE_TOKEN`
 
 value: `YOUR_FIREBASE_TOKEN` (run firebase login:ci in the project folder to get your token)
 
-## Contributing
+## Development
 
-If you have suggestions for how github-tipbot could be improved, or want to report a bug, open an issue! We'd love all and any contributions.
+See the `frontend/README.md` for details on how to build, test and deploy the frontend app.
+
+### Updating firestore indexes
+
+If you have updated the firestore indexes it is important to also add the changes to source control. In the firebase CLI, run `firebase firestore:indexes` to get the JSON, then overwrite the content of the `firestore.indexes.json` file in the root of the project folder.
+
+### Updating firestore security rules
+
+If you have updated the firestore rules it is important to also add the changes to source control. In the firebase console, copy the rules text and overwrite the content of the `firestore.rules` file in the root folder of the project.
 
 ## License
 

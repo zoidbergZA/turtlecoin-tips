@@ -1,9 +1,11 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
+import { DocumentData, Query } from '@google-cloud/firestore';
+import { WithdrawalPreview, ServiceError, Account } from 'trtl-apps';
+
 import * as core from './core/coreModule';
 import { onAuthUserCreated as processNewGithubAuthUser } from './github/githubModule';
 import { AppError } from '../appError';
-import { WithdrawalPreview, ServiceError, Account } from 'trtl-apps';
 import { WebAppUser, LinkedTurtleAccount } from '../types';
 
 export const onNewAuthUserCreated = functions.auth.user().onCreate(async (user) => {
@@ -62,25 +64,24 @@ export const onLinkedAccountWrite = functions.firestore
     return;
   }
 
-  const primaryAccount = await getLinkedTurtleAccount();
+  await transferBalanceToPrimaryAccount(linkedAccount);
+});
 
-  if (!primaryAccount) {
-    console.log(`user [${linkedAccount.userId}] does not have a primary linked account!`);
+export const retryTransfersToPrimaryAccounts = functions.pubsub.schedule('every 1 hours').onRun(async (context) => {
+  // retry transfers to a users' primary linked account from their other linked accounts.
+  const snapshot = await admin.firestore().collectionGroup('turtle_accounts')
+                    .where('primary', '==', false)
+                    .where('balanceUnlocked', '>', 0)
+                    .get();
+
+  if (snapshot.size === 0) {
     return;
   }
 
-  // transfer the available balance to the primary linked account
-  const [transfer, err] = await core.accountTransfer(
-                            linkedAccount.accountId,
-                            primaryAccount.accountId,
-                            linkedAccount.balanceUnlocked);
+  const linkedAccounts = snapshot.docs.map(d => d.data() as LinkedTurtleAccount);
+  const jobs = linkedAccounts.map(acc => transferBalanceToPrimaryAccount(acc));
 
-  if (!transfer) {
-    const transferError = err as ServiceError;
-    console.log(transferError.message);
-  }
-
-  console.log(`transferred [${linkedAccount.balanceUnlocked}] from user [${linkedAccount.userId}] linked account [${linkedAccount.accountId}] to primary account [${primaryAccount.accountId}]`);
+  await Promise.all(jobs);
 });
 
 export const userPrepareWithdrawal = functions.https.onCall(async (data, context) => {
@@ -205,11 +206,12 @@ export async function linkUserTurtleAccount(appUser: WebAppUser, account: Accoun
 
 /**
  *
+ * @param userId the user that the linked account belongs to
  * @param accountId if no accountId is provided, will fetch the primary linked account
  *
  */
-export async function getLinkedTurtleAccount(accountId?: string): Promise<LinkedTurtleAccount | null> {
-  let query = admin.firestore().collectionGroup('turtle_accounts');
+export async function getLinkedTurtleAccount(userId: string, accountId?: string): Promise<LinkedTurtleAccount | null> {
+  let query: Query<DocumentData> = admin.firestore().collection(`users/${userId}/turtle_accounts`);
 
   if (accountId) {
     query = query.where('accountId', '==', accountId);
@@ -273,4 +275,36 @@ async function prepareWithdrawToAddress(
   }
 
   return core.prepareWithdrawal(primaryAccount.id, amount, address);
+}
+
+/**
+ *
+ * Transfers the unlocked balance of the provided linked account to the owner's primary linked account.
+ *
+ * @param linkedAccount the non-primary linked account to transfer the unlocked balance from
+ */
+async function transferBalanceToPrimaryAccount(linkedAccount: LinkedTurtleAccount) {
+  if (linkedAccount.primary) {
+    return;
+  }
+
+  const primaryAccount = await getLinkedTurtleAccount(linkedAccount.userId);
+
+  if (!primaryAccount) {
+    console.log(`user [${linkedAccount.userId}] does not have a primary linked account!`);
+    return;
+  }
+
+  // transfer the available balance to the primary linked account
+  const [transfer, err] = await core.accountTransfer(
+                            linkedAccount.accountId,
+                            primaryAccount.accountId,
+                            linkedAccount.balanceUnlocked);
+
+  if (!transfer) {
+    const transferError = err as ServiceError;
+    console.log(transferError.message);
+  }
+
+  console.log(`transferred [${linkedAccount.balanceUnlocked}] from user [${linkedAccount.userId}] linked account [${linkedAccount.accountId}] to primary account [${primaryAccount.accountId}]`);
 }

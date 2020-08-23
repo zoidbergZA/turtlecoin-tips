@@ -8,12 +8,18 @@ export interface WebAppUser {
   uid: string;
   primaryAccountId?: string;
   githubId?: number;
+  email?: string;
   username: string;
   disclaimerAccepted: boolean;
 }
 
 export interface GithubUser {
   githubId: number;
+  accountId: string;
+}
+
+export interface EmailUser {
+  email: string;
   accountId: string;
 }
 

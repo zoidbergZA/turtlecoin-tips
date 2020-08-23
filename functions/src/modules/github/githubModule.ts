@@ -30,6 +30,7 @@ export async function onAuthUserCreated(user: admin.auth.UserRecord): Promise<vo
 
   if (!provider) {
     console.log(`invalid github provider: ${JSON.stringify(user.providerData)} on auth user [${user.uid}].`);
+    await admin.auth().deleteUser(user.uid);
     return;
   }
 
@@ -37,7 +38,7 @@ export async function onAuthUserCreated(user: admin.auth.UserRecord): Promise<vo
   let username = provider.displayName || provider.email;
 
   if (!username) {
-    username = 'new user';
+    username = 'wallet user';
   }
 
   const appUser: WebAppUser = {
@@ -64,6 +65,7 @@ export async function onAuthUserCreated(user: admin.auth.UserRecord): Promise<vo
         await deleteUnclaimedTips(tips.map(t => t.id));
       }
     } else {
+      // TODO: handle this case
       console.log((accError as AppError).message);
     }
   } else {

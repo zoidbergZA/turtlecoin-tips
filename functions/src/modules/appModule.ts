@@ -1,12 +1,12 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import { DocumentData, Query } from '@google-cloud/firestore';
-import { WithdrawalPreview, ServiceError, Account } from 'trtl-apps';
+import { TrtlApp, WithdrawalPreview, ServiceError, Account } from 'trtl-apps';
 
 import * as core from './core/coreModule';
 import { onAuthUserCreated as processNewGithubAuthUser } from './github/githubModule';
 import { AppError } from '../appError';
-import { WebAppUser, LinkedTurtleAccount } from '../types';
+import { WebAppUser, LinkedTurtleAccount, EmailUser } from '../types';
 
 export const onNewAuthUserCreated = functions.auth.user().onCreate(async (user) => {
   console.log(`creating new user => uid: ${user.uid}`);
@@ -14,6 +14,8 @@ export const onNewAuthUserCreated = functions.auth.user().onCreate(async (user) 
 
   if (user.providerData.some(p => p.providerId === 'github.com')) {
     await processNewGithubAuthUser(user);
+  } else if (user.providerData.some(p => p.providerId === 'password')) {
+    await processNewEmailPasswordUser(user);
   } else {
     console.log(`unsupported provider: ${JSON.stringify(user.providerData)}, deleting auth user [${user.uid}]...`);
     await admin.auth().deleteUser(user.uid);
@@ -307,4 +309,87 @@ async function transferBalanceToPrimaryAccount(linkedAccount: LinkedTurtleAccoun
   }
 
   console.log(`transferred [${linkedAccount.balanceUnlocked}] from user [${linkedAccount.userId}] linked account [${linkedAccount.accountId}] to primary account [${primaryAccount.accountId}]`);
+}
+
+async function processNewEmailPasswordUser(user: admin.auth.UserRecord): Promise<void> {
+  const provider = user.providerData.find(p => p.providerId === 'password');
+
+  if (!provider) {
+    console.log(`invalid email/password provider: ${JSON.stringify(user.providerData)} on auth user [${user.uid}].`);
+    await admin.auth().deleteUser(user.uid);
+    return;
+  }
+
+  if (!user.email) {
+    console.log(`invalid email address for new auth user [${user.uid}]`);
+    await admin.auth().deleteUser(user.uid);
+    return;
+  }
+
+  const appUser: WebAppUser = {
+    uid: user.uid,
+    username: user.email,
+    email: user.email,
+    disclaimerAccepted: false
+  }
+
+  await admin.firestore().doc(`users/${appUser.uid}`).set(appUser);
+
+  const [existingEmailUser] = await getEmailUser(user.email);
+
+  if (existingEmailUser) {
+    const [account, accError] = await core.getAccount(existingEmailUser.accountId);
+
+    if (account) {
+      await linkUserTurtleAccount(appUser, account); // TODO: handle case where linking failed
+    } else {
+      // TODO: handle this case
+      console.log((accError as AppError).message);
+    }
+  } else {
+    const [account, userError] = await createEmailUser(user.email);
+
+    if (account) {
+      await linkUserTurtleAccount(appUser, account); // TODO: handle case where linking failed
+    } else {
+      //TODO: if we failed to create a github user (and turtle account), we should retry later
+      console.log(`error creating account for app user [${appUser.uid}]: ${(userError as AppError).message}`);
+    }
+  }
+}
+
+async function createEmailUser(email: string): Promise<[Account | undefined, undefined | AppError]> {
+  const [account, accError] = await TrtlApp.createAccount();
+
+  if (!account) {
+    return [undefined, new AppError('app/create-account', (accError as ServiceError).message)];
+  }
+
+  try {
+    const emailUser: EmailUser = {
+      email: email,
+      accountId: account.id
+    }
+
+    const batch = admin.firestore().batch();
+
+    batch.create(admin.firestore().doc(`accounts/${account.id}`), account);
+    batch.create(admin.firestore().doc(`platforms/email/users/${email}`), emailUser);
+
+    await batch.commit();
+
+    return [account, undefined];
+  } catch (error) {
+    return [undefined, new AppError('app/create-account', `error creating EmailUser for: ${email}`)];
+  }
+}
+
+async function getEmailUser(email: string): Promise<[EmailUser | undefined, undefined | AppError]> {
+  const snapshot = await admin.firestore().doc(`platforms/email/users/${email}`).get();
+
+  if (snapshot.exists) {
+    return [snapshot.data() as EmailUser, undefined];
+  } else {
+    return [undefined, new AppError('app/user-not-found')];
+  }
 }

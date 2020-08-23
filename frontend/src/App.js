@@ -11,7 +11,7 @@ import Withdraw from './components/Withdraw/Withdraw';
 import History from './components/History/History';
 import Help from 'components/Help';
 import PrivacyPolicy from 'components/PrivacyPolicy';
-import Login from 'components/Login';
+import Login from 'components/Login/Login';
 
 function App() {
   return (

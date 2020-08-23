@@ -4,7 +4,7 @@ import * as core from './core/coreModule';
 import { onAuthUserCreated as processNewGithubAuthUser } from './github/githubModule';
 import { AppError } from '../appError';
 import { WithdrawalPreview, ServiceError, Account } from 'trtl-apps';
-import { WebAppUser, UserTurtleAccount } from '../types';
+import { WebAppUser, LinkedTurtleAccount } from '../types';
 
 export const onNewAuthUserCreated = functions.auth.user().onCreate(async (user) => {
   console.log(`creating new user => uid: ${user.uid}`);
@@ -37,13 +37,13 @@ export const onAccountWrite = functions.firestore.document('accounts/{accountId}
     return;
   }
 
-  const linkedAccount = await getLinkedUserTurtleAccount(context.params.accountId);
+  const linkedAccount = await getLinkedTurtleAccount(context.params.accountId);
 
   if (!linkedAccount) {
     return;
   }
 
-  const update: Partial<UserTurtleAccount> = {
+  const update: Partial<LinkedTurtleAccount> = {
     balanceUnlocked: account.balanceUnlocked
   }
 
@@ -52,17 +52,17 @@ export const onAccountWrite = functions.firestore.document('accounts/{accountId}
     .update(update)
 });
 
-export const onUserTurtleAccountWrite = functions.firestore
+export const onLinkedAccountWrite = functions.firestore
   .document('users/{userId}/turtle_accounts/{accountId}')
   .onWrite(async (change, context) => {
   // if this linked account is not the primary linked account, transfer its balance to the primary
-  const linkedAccount = change.after.exists ? change.after.data() as UserTurtleAccount : null;
+  const linkedAccount = change.after.exists ? change.after.data() as LinkedTurtleAccount : null;
 
   if (!linkedAccount || linkedAccount.primary) {
     return;
   }
 
-  const primaryAccount = await getLinkedUserTurtleAccount();
+  const primaryAccount = await getLinkedTurtleAccount();
 
   if (!primaryAccount) {
     console.log(`user [${linkedAccount.userId}] does not have a primary linked account!`);
@@ -156,7 +156,7 @@ export async function linkUserTurtleAccount(appUser: WebAppUser, account: Accoun
                       .get();
 
   if (matchQuery.size > 0) {
-    const matchedAccount = matchQuery.docs[0].data() as UserTurtleAccount;
+    const matchedAccount = matchQuery.docs[0].data() as LinkedTurtleAccount;
     console.log(`turtle account [${matchedAccount.accountId}] already linked to user [${appUser.uid}]!`);
 
     return false;
@@ -171,8 +171,8 @@ export async function linkUserTurtleAccount(appUser: WebAppUser, account: Accoun
   const isPrimary = snapshot.size === 0;
   const promises: Promise<any>[] = [];
 
-  // add account to user's list of turtle_accounts
-  const userTurtleAccount: UserTurtleAccount = {
+  // add account to user's list of linked turtle_accounts
+  const linkedTurtleAccount: LinkedTurtleAccount = {
     accountId: account.id,
     userId: appUser.uid,
     primary: isPrimary,
@@ -181,7 +181,7 @@ export async function linkUserTurtleAccount(appUser: WebAppUser, account: Accoun
 
   const addAccountPromise = admin.firestore()
     .doc(`users/${appUser.uid}/turtle_accounts/${account.id}`)
-    .set(userTurtleAccount);
+    .set(linkedTurtleAccount);
 
   promises.push(addAccountPromise);
 
@@ -208,7 +208,7 @@ export async function linkUserTurtleAccount(appUser: WebAppUser, account: Accoun
  * @param accountId if no accountId is provided, will fetch the primary linked account
  *
  */
-export async function getLinkedUserTurtleAccount(accountId?: string): Promise<UserTurtleAccount | null> {
+export async function getLinkedTurtleAccount(accountId?: string): Promise<LinkedTurtleAccount | null> {
   let query = admin.firestore().collectionGroup('turtle_accounts');
 
   if (accountId) {
@@ -223,7 +223,7 @@ export async function getLinkedUserTurtleAccount(accountId?: string): Promise<Us
     return null;
   }
 
-  return snapshot.docs[0].data() as UserTurtleAccount;
+  return snapshot.docs[0].data() as LinkedTurtleAccount;
 }
 
 export async function getAccountOwner(accountId: string): Promise<[WebAppUser | undefined, undefined | AppError]> {
@@ -236,9 +236,9 @@ export async function getAccountOwner(accountId: string): Promise<[WebAppUser | 
     return [undefined, new AppError('app/user-not-found')];
   }
 
-  const account = accountsSnapshot.docs[0].data() as UserTurtleAccount;
+  const linkedAccount = accountsSnapshot.docs[0].data() as LinkedTurtleAccount;
 
-  return getAppUserByUid(account.userId);
+  return getAppUserByUid(linkedAccount.userId);
 }
 
 async function getAppUserByUid(uid: string): Promise<[WebAppUser | undefined, undefined | AppError]> {

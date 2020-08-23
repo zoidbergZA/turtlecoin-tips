@@ -36,7 +36,7 @@ export type Platform = 'webapp' | 'github';
 export type TransactionType = 'deposit' | 'withdrawal' | 'tip' | 'tipRefund';
 export type TransactionStatus = 'confirming' | 'completed' | 'failed';
 
-export interface UserTurtleAccount {
+export interface LinkedTurtleAccount {
   accountId: string;
   userId: string;
   primary: boolean;

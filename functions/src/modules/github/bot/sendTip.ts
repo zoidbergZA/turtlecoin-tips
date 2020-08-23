@@ -7,7 +7,7 @@ import { getGithubIdByUsername, getWebAppUserByGithubId,
   getGithubUser, createGithubUser, createUnclaimedTipDoc } from '../githubModule';
 import { TipCommandInfo, Transaction } from '../../../types';
 import { AppError } from '../../../appError';
-import { getAccountOwner } from '../../webAppModule';
+import { getAccountOwner } from '../../appModule';
 import * as core from '../../core/coreModule';
 
 const webAppUrl = functions.config().frontend.url;

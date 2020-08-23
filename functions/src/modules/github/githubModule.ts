@@ -9,7 +9,7 @@ import { Request, Response } from 'express';
 import { AppError } from '../../appError';
 import { WebAppUser, UnclaimedTip, Transaction, GithubUser } from '../../types';
 import { TrtlApp, ServiceError, Transfer } from 'trtl-apps';
-import { linkUserTurtleAccount } from '../webAppModule';
+import { linkUserTurtleAccount } from '../appModule';
 
 const octokit = new Octokit({});
 

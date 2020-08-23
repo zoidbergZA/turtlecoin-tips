@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
-import * as webAppModule from './modules/webAppModule';
+import * as webAppModule from './modules/appModule';
 import * as githubModule from './modules/github/githubModule';
 import * as coreModule from './modules/core/coreModule';
 import { TrtlApp } from 'trtl-apps';

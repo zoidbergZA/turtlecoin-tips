@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { combineLatest } from 'rxjs';
+import { mergeAll } from 'rxjs/operators';
 import app from '../../base';
 import { collectionData } from 'rxfire/firestore';
 import { AuthContext } from 'contexts/Auth';
@@ -17,11 +19,20 @@ const History = () => {
     if (currentUser && currentUser.primaryAccountId) {
       collectionData(
         app.firestore()
-        .collection(`accounts/${currentUser.primaryAccountId}/transactions`)
-        .orderBy('timestamp', 'desc')
-        .limit(40)
-      ).subscribe(txs => {
-        setTransactions(txs);
+        .collection(`users/${currentUser.uid}/turtle_accounts`)
+      ).subscribe(accs => {
+        const streams = accs.map(acc => {
+          return collectionData(
+            app.firestore().collection(`accounts/${acc.accountId}/transactions`)
+            .orderBy('timestamp', 'desc')
+            .limit(40)
+          );
+        });
+
+        combineLatest(streams).pipe(mergeAll()).subscribe(txs => {
+          setTransactions(txs);
+        });
+
       });
     }
   }, [currentUser]);

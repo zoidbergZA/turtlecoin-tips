@@ -5,6 +5,11 @@ service cloud.firestore {
       match /users/{uid} {
       	allow read: if request.auth.uid == uid
         allow write: if false
+
+        match /turtle_accounts/{accountId} {
+        	allow read: if request.auth.uid == uid
+          allow write: if false;
+        }
       }
       match /accounts/{accountId} {
       	allow read: if request.auth.uid != null &&

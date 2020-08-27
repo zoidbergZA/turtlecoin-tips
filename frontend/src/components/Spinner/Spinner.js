@@ -1,7 +1,6 @@
 import React from 'react';
 import Loader from 'react-bulma-components/lib/components/loader';
 
-
 const Spinner = ({ message }) => {
   return (
     <React.Fragment>

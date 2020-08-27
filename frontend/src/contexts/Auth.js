@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
     .pipe(
       switchMap(u => {
         if (u) {
+          // console.log(JSON.stringify(u))
           return doc(app.firestore().doc(`users/${u.uid}`));
         } else {
           setCurrentUser(null);

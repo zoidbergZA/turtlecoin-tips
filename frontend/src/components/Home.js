@@ -1,6 +1,9 @@
 import React, { useContext } from 'react';
+import Container from 'react-bulma-components/lib/components/container';
+import Section from 'react-bulma-components/lib/components/section';
 import { TurtleAccountContext } from '../contexts/Account';
 import AccountOverview from './AccountOverview';
+import Spinner from './Spinner/Spinner';
 
 const Home = () => {
   let accountView;
@@ -10,7 +13,13 @@ const Home = () => {
   if (turtleAccount) {
     accountView = <AccountOverview {...turtleAccount} />
   } else {
-    accountView = null;
+    accountView = (
+      <Section>
+        <Container>
+          <Spinner />
+        </Container>
+      </Section>
+    );
   }
 
   return (

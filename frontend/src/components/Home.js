@@ -13,6 +13,7 @@ const Home = () => {
   if (turtleAccount) {
     accountView = <AccountOverview {...turtleAccount} />
   } else {
+    // TODO: in the case where user has only email login and not yet verfied, dont show spinner but only verify account message
     accountView = (
       <Section>
         <Container>

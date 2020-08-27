@@ -1,7 +1,18 @@
-import { Transfer } from 'trtl-apps';
+import { admin } from 'firebase-admin/lib/auth';
+import { Transfer, Account } from 'trtl-apps';
 
 export interface Config {
   githubTipTimeoutDays: number    // amount of days before unclaimed tips are refunded. < 1 days means no timeout
+}
+
+export interface ITurtleAccountLinker {
+  accountProvider: AccountProvider;
+  updateAccountLink: (
+    authUser: admin.auth.UserRecord,
+    appUser: WebAppUser,
+    linkedAccounts: LinkedTurtleAccount[],
+    linkUserTurtleAccount: (appUser: WebAppUser, account: Account, provider: AccountProvider) => Promise<void>
+  ) => Promise<string>
 }
 
 export interface WebAppUser {
@@ -9,6 +20,7 @@ export interface WebAppUser {
   primaryAccountId?: string;
   githubId?: number;
   email?: string;
+  emailVerified: boolean;
   username: string;
   disclaimerAccepted: boolean;
 }
@@ -38,11 +50,13 @@ export interface UnclaimedTip extends Transfer {
   senderUsername: string;
 }
 
+export type AccountProvider = 'email' | 'github';
 export type Platform = 'webapp' | 'github';
 export type TransactionType = 'deposit' | 'withdrawal' | 'tip' | 'tipRefund';
 export type TransactionStatus = 'confirming' | 'completed' | 'failed';
 
 export interface LinkedTurtleAccount {
+  provider: AccountProvider;
   accountId: string;
   userId: string;
   primary: boolean;

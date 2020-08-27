@@ -7,11 +7,84 @@ import { DocumentData, Query } from '@google-cloud/firestore';
 import { Octokit } from '@octokit/rest';
 import { Request, Response } from 'express';
 import { AppError } from '../../appError';
-import { WebAppUser, UnclaimedTip, Transaction, GithubUser } from '../../types';
+import { WebAppUser, UnclaimedTip, Transaction, GithubUser, ITurtleAccountLinker } from '../../types';
 import { TrtlApp, ServiceError, Transfer } from 'trtl-apps';
-import { linkUserTurtleAccount } from '../appModule';
 
 const octokit = new Octokit({});
+
+export const githHubAccountLinker: ITurtleAccountLinker = {
+  accountProvider: 'github',
+  async updateAccountLink(authUser, appUser, linkedAccounts, linkTurtleAccount): Promise<string> {
+    const provider = authUser.providerData.find(p => p.providerId === 'github.com');
+
+    if (!provider) {
+      return `failed to update github account link: no github provider found.`;
+    }
+
+    if (appUser.githubId) {
+      const linkedGithubAcc = linkedAccounts.find(a => a.provider === 'github');
+
+      if (linkedGithubAcc) {
+        return `github account already linked.`;
+      } else {
+        // TODO: handle case where user has a githubId but no account linked.
+        return `appUser has githubId but no linked account, TODO: handle this case!`;
+      }
+    }
+
+    const githubId = Number.parseInt(provider.uid);
+    const username = provider.displayName || provider.email;
+
+    const appUserUpdate: Partial<WebAppUser> = {
+      githubId: githubId
+    }
+
+    if (username) {
+      appUserUpdate.username = username;
+    }
+
+    await admin.firestore().doc(`users/${appUser.uid}`).update(appUserUpdate);
+
+    const [existingGithubUser] = await getGithubUser(githubId);
+
+    if (existingGithubUser) {
+      const [account, accError] = await core.getAccount(existingGithubUser.accountId);
+
+      if (account) {
+        await linkTurtleAccount(appUser, account, 'github');
+
+        // if the new user already has a tips account, cancel all unclaimed tips.
+        const tips = await getUnclaimedTips(appUser.githubId);
+
+        if (tips.length > 0) {
+          await deleteUnclaimedTips(tips.map(t => t.id));
+        }
+
+        return `found existing github user [${existingGithubUser.githubId}] account, linked existing turtle account [${account.id}].`;
+      } else {
+        // TODO: handle this case
+        console.log((accError as AppError).message);
+        return `found existing github user [${existingGithubUser.githubId}] but no turtle account, TODO: handle this case!`;
+      }
+    } else {
+      const [githubUser] = await createGithubUser(githubId);
+
+      if (githubUser) {
+        const [account, accError] = await core.getAccount(githubUser.accountId);
+
+        if (account) {
+          await linkTurtleAccount(appUser, account, 'github');
+          return `created new github user [${githubUser.githubId}] and linked with new turtle account [${githubUser.accountId}].`;
+        } else {
+          console.log((accError as AppError).message);
+          return `failed get turtle account of new github user, try again later.`;
+        }
+      } else {
+        return `failed to create new github platform user, try again later.`;
+      }
+    }
+  }
+}
 
 /**
  * Relay Github events to the bot
@@ -24,69 +97,6 @@ export const marketplaceWebhook = functions.https.onRequest(async (request: Requ
   console.log(request.body);
   response.status(200).send({status: 'OK'});
 });
-
-export async function onAuthUserCreated(user: admin.auth.UserRecord): Promise<void> {
-  const provider = user.providerData.find(p => p.providerId === 'github.com');
-
-  if (!provider) {
-    console.log(`invalid github provider: ${JSON.stringify(user.providerData)} on auth user [${user.uid}].`);
-    await admin.auth().deleteUser(user.uid);
-    return;
-  }
-
-  const githubId = Number.parseInt(provider.uid);
-  let username = provider.displayName || provider.email;
-
-  if (!username) {
-    username = 'wallet user';
-  }
-
-  const appUser: WebAppUser = {
-    uid: user.uid,
-    username: username,
-    githubId: githubId,
-    disclaimerAccepted: false
-  }
-
-  await admin.firestore().doc(`users/${appUser.uid}`).set(appUser);
-
-  const [existingGithubUser] = await getGithubUser(githubId);
-
-  if (existingGithubUser) {
-    const [account, accError] = await core.getAccount(existingGithubUser.accountId);
-
-    if (account) {
-      await linkUserTurtleAccount(appUser, account);
-
-      // if the new user already has a tips account, cancel all unclaimed tips.
-      const tips = await getUnclaimedTips(appUser.githubId);
-
-      if (tips.length > 0) {
-        await deleteUnclaimedTips(tips.map(t => t.id));
-      }
-    } else {
-      // TODO: handle this case
-      console.log((accError as AppError).message);
-    }
-  } else {
-    const [githubUser, userError] = await createGithubUser(githubId);
-
-    if (githubUser) {
-      const [account, accError] = await core.getAccount(githubUser.accountId);
-
-      if (account) {
-       await linkUserTurtleAccount(appUser, account);
-      } else {
-        console.log((accError as AppError).message);
-      }
-
-      console.log(`associated account [${githubUser.accountId}] with user [${appUser.uid}].`);
-    } else {
-      //TODO: if we failed to create a github user (and turtle account), we should retry later
-      console.log(`error creating account for app user [${appUser.uid}]: ${(userError as AppError).message}`);
-    }
-  }
-}
 
 export async function createGithubUser(githubId: number): Promise<[GithubUser | undefined, undefined | AppError]> {
   const [account, accError] = await TrtlApp.createAccount();

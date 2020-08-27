@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import app from '../../base';
-import * as firebase from 'firebase/app';
+// import app from '../../base';
+// import * as firebase from 'firebase/app';
 // import { Redirect } from 'react-router';
 // import { TurtleAccountContext } from '../../contexts/Account';
 // import { AuthContext } from '../../contexts/Auth';

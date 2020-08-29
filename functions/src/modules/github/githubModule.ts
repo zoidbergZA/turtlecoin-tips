@@ -26,9 +26,6 @@ export const githHubAccountLinker: ITurtleAccountLinker = {
 
       if (linkedGithubAcc) {
         return `github account already linked.`;
-      } else {
-        // TODO: handle case where user has a githubId but no account linked.
-        return `appUser has githubId but no linked account, TODO: handle this case!`;
       }
     }
 
@@ -43,6 +40,7 @@ export const githHubAccountLinker: ITurtleAccountLinker = {
       appUserUpdate.username = username;
     }
 
+    // TODO: only do this update if something has changed
     await admin.firestore().doc(`users/${appUser.uid}`).update(appUserUpdate);
 
     const [existingGithubUser] = await getGithubUser(githubId);

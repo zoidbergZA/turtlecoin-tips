@@ -9,7 +9,7 @@ import { AppError } from '../appError';
 import { WebAppUser, EmailUser, LinkedTurtleAccount, AccountProvider, ITurtleAccountLinker } from '../types';
 
 const emailAccountLinker: ITurtleAccountLinker = {
-  accountProvider: 'email',
+  accountProvider: 'password',
   async updateAccountLink(authUser, appUser, linkedAccounts, linkTurtleAccount): Promise<string> {
     const provider = authUser.providerData.find(p => p.providerId === 'password');
 
@@ -34,7 +34,7 @@ const emailAccountLinker: ITurtleAccountLinker = {
     }
 
     if (appUser.email) {
-      const linkedEmailAcc = linkedAccounts.find(a => a.provider === 'email');
+      const linkedEmailAcc = linkedAccounts.find(a => a.provider === 'password');
 
       if (linkedEmailAcc) {
         return `email account already linked.`;
@@ -50,7 +50,7 @@ const emailAccountLinker: ITurtleAccountLinker = {
       const [account, accError] = await core.getAccount(existingEmailUser.accountId);
 
       if (account) {
-        await linkTurtleAccount(appUser, account, 'email');
+        await linkTurtleAccount(appUser, account, 'password');
         return `found existing email user [${existingEmailUser.email}] account, linked existing turtle account [${account.id}].`;
       } else {
         // TODO: handle this case
@@ -64,7 +64,7 @@ const emailAccountLinker: ITurtleAccountLinker = {
         const [account, accError] = await core.getAccount(emailUser.accountId);
 
         if (account) {
-          await linkTurtleAccount(appUser, account, 'email');
+          await linkTurtleAccount(appUser, account, 'password');
           return `created new email user [${emailUser.email}] and linked with new turtle account [${emailUser.accountId}].`;
         } else {
           console.log((accError as AppError).message);

@@ -50,7 +50,7 @@ export interface UnclaimedTip extends Transfer {
   senderUsername: string;
 }
 
-export type AccountProvider = 'email' | 'github';
+export type AccountProvider = 'password' | 'github.com';
 export type Platform = 'webapp' | 'github';
 export type TransactionType = 'deposit' | 'withdrawal' | 'tip' | 'tipRefund';
 export type TransactionStatus = 'confirming' | 'completed' | 'failed';

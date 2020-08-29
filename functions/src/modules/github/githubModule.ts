@@ -13,7 +13,7 @@ import { TrtlApp, ServiceError, Transfer } from 'trtl-apps';
 const octokit = new Octokit({});
 
 export const githHubAccountLinker: ITurtleAccountLinker = {
-  accountProvider: 'github',
+  accountProvider: 'github.com',
   async updateAccountLink(authUser, appUser, linkedAccounts, linkTurtleAccount): Promise<string> {
     const provider = authUser.providerData.find(p => p.providerId === 'github.com');
 
@@ -22,7 +22,7 @@ export const githHubAccountLinker: ITurtleAccountLinker = {
     }
 
     if (appUser.githubId) {
-      const linkedGithubAcc = linkedAccounts.find(a => a.provider === 'github');
+      const linkedGithubAcc = linkedAccounts.find(a => a.provider === 'github.com');
 
       if (linkedGithubAcc) {
         return `github account already linked.`;
@@ -49,7 +49,7 @@ export const githHubAccountLinker: ITurtleAccountLinker = {
       const [account, accError] = await core.getAccount(existingGithubUser.accountId);
 
       if (account) {
-        await linkTurtleAccount(appUser, account, 'github');
+        await linkTurtleAccount(appUser, account, 'github.com');
 
         // if the new user already has a tips account, cancel all unclaimed tips.
         const tips = await getUnclaimedTips(appUser.githubId);
@@ -71,7 +71,7 @@ export const githHubAccountLinker: ITurtleAccountLinker = {
         const [account, accError] = await core.getAccount(githubUser.accountId);
 
         if (account) {
-          await linkTurtleAccount(appUser, account, 'github');
+          await linkTurtleAccount(appUser, account, 'github.com');
           return `created new github user [${githubUser.githubId}] and linked with new turtle account [${githubUser.accountId}].`;
         } else {
           console.log((accError as AppError).message);

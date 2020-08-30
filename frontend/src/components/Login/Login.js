@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-// import app from '../../base';
-// import * as firebase from 'firebase/app';
-// import { Redirect } from 'react-router';
+import React, { useState, useContext } from 'react';
+import app from '../../base';
+import * as firebase from 'firebase/app';
+import { Redirect } from 'react-router';
 // import { TurtleAccountContext } from '../../contexts/Account';
-// import { AuthContext } from '../../contexts/Auth';
+import { AuthContext } from '../../contexts/Auth';
 import Heading from 'react-bulma-components/lib/components/heading';
 import Section from 'react-bulma-components/lib/components/section';
 import Container from 'react-bulma-components/lib/components/container';
@@ -12,7 +12,7 @@ import Spinner from '../Spinner/Spinner';
 
 const Login = ({ history }) => {
   // const { turtleAccount } = useContext(TurtleAccountContext);
-  // const { currentUser } = useContext(AuthContext);
+  const { currentUser } = useContext(AuthContext);
   const [errorMessage, setErrorMessage] = useState(null);
   const [busyMessage, setBusyMessage]   = useState(null);
 
@@ -26,27 +26,22 @@ const Login = ({ history }) => {
 
     setBusyMessage('creating account...');
 
-    // TODO: uncomment when email login is ready
+    try {
+      await app.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
+      const credentials = await app.auth().createUserWithEmailAndPassword(data.email, data.password);
+      await credentials.user.sendEmailVerification();
 
-    // try {
-    //   app.auth().setPersistence(firebase.auth.Auth.Persistence.NONE).then(() => {
-    //     app.auth().createUserWithEmailAndPassword(data.email, data.password).then(async credentials => {
-    //       await credentials.user.sendEmailVerification();
-    //       history.push('/');
-    //     }).catch(function(error) {
-    //       setErrorMessage(error.message);
-    //       setBusyMessage(null);
-    //     });
-    //   });
-    // } catch (error) {
-    //   setErrorMessage(error.message);
-    //   setBusyMessage(null);
-    // }
+      // history.push('/');
+    } catch (error) {
+      console.log(error);
+      setErrorMessage(error.message);
+      setBusyMessage(null);
+    }
   }
 
-  // if (currentUser) {
-  //   return <Redirect to="/" />;
-  // }
+  if (currentUser) {
+    return <Redirect to="/" />;
+  }
 
   if (busyMessage) {
     return (
@@ -64,9 +59,11 @@ const Login = ({ history }) => {
     <Section>
       <Container>
         <Heading>Sign in with email</Heading>
-          <p>Sign in</p>
-          <p>Create account</p>
+        <Heading size={5}>Sign in</Heading>
+        <Heading size={5}>Create account</Heading>
+        <div style={{ width: "320px", display : 'inline-block' }}>
           <CreateAccountForm errorMessage={errorMessage} onSubmit={createAccount} />
+        </div>
       </Container>
     </Section>
   );

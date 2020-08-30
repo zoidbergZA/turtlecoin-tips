@@ -12,6 +12,7 @@ import History from './components/History/History';
 import Help from 'components/Help';
 import PrivacyPolicy from 'components/PrivacyPolicy';
 import Login from 'components/Login/Login';
+import UserManagement from 'components/UserManagement';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
             </TurtleAccountProvider>
             <Route exact path="/start" component={Start}/>
             <Route exact path="/privacy-policy" component={PrivacyPolicy}/>
+            <Route exact path="/user-mgmt" component={UserManagement} />
           </React.Fragment>
         </Router>
       </AuthProvider>

@@ -8,77 +8,99 @@ import { Octokit } from '@octokit/rest';
 import { Request, Response } from 'express';
 import { AppError } from '../../appError';
 import { WebAppUser, UnclaimedTip, Transaction, GithubUser, ITurtleAccountLinker } from '../../types';
-import { TrtlApp, ServiceError, Transfer } from 'trtl-apps';
+import { TrtlApp, ServiceError, Transfer, Account } from 'trtl-apps';
 
 const octokit = new Octokit({});
 
 export const githHubAccountLinker: ITurtleAccountLinker = {
   accountProvider: 'github.com',
-  async updateAccountLink(authUser, appUser, linkedAccounts, linkTurtleAccount): Promise<string> {
+  async updateAppUserPlatformData(authUser: admin.auth.UserRecord): Promise<void> {
     const provider = authUser.providerData.find(p => p.providerId === 'github.com');
 
     if (!provider) {
-      return `failed to update github account link: no github provider found.`;
+      return;
     }
 
-    if (appUser.githubId) {
-      const linkedGithubAcc = linkedAccounts.find(a => a.provider === 'github.com');
+    const [appUser] = await core.getAppUserByUid(authUser.uid);
 
-      if (linkedGithubAcc) {
-        return `github account already linked.`;
-      }
+    if (!appUser) {
+      return;
     }
 
     const githubId = Number.parseInt(provider.uid);
     const username = provider.displayName || provider.email;
+    const appUserUpdate: Partial<WebAppUser> = { };
 
-    const appUserUpdate: Partial<WebAppUser> = {
-      githubId: githubId
+    if (appUser.githubId !== githubId) {
+      appUserUpdate.githubId = githubId
     }
 
-    if (username) {
+    if (appUser.username !== username) {
       appUserUpdate.username = username;
     }
 
-    // TODO: only do this update if something has changed
-    await admin.firestore().doc(`users/${appUser.uid}`).update(appUserUpdate);
+    if (Object.keys(appUserUpdate).length > 0) {
+      console.log(`update appUser: ${JSON.stringify(appUserUpdate)}`);
+      await admin.firestore().doc(`users/${appUser.uid}`).update(appUserUpdate);
+    }
+  },
+  async validateAccountLinkRequirements(authUser: admin.auth.UserRecord): Promise<boolean> {
+    const provider = authUser.providerData.find(p => p.providerId === 'github.com');
 
-    const [existingGithubUser] = await getGithubUser(githubId);
+    return provider !== undefined;
+  },
+  async getExistingPlatformAccount(userId: string): Promise<Account | undefined> {
+    const [appUser] = await core.getAppUserByUid(userId);
 
-    if (existingGithubUser) {
-      const [account, accError] = await core.getAccount(existingGithubUser.accountId);
+    if (!appUser) {
+      return;
+    }
 
-      if (account) {
-        await linkTurtleAccount(appUser, account, 'github.com');
+    if (!appUser.githubId) {
+      return;
+    }
 
-        // if the new user already has a tips account, cancel all unclaimed tips.
-        const tips = await getUnclaimedTips(appUser.githubId);
+    const [existingGithubUser] = await getGithubUser(appUser.githubId);
 
-        if (tips.length > 0) {
-          await deleteUnclaimedTips(tips.map(t => t.id));
-        }
+    if (!existingGithubUser) {
+      return undefined;
+    }
 
-        return `found existing github user [${existingGithubUser.githubId}] account, linked existing turtle account [${account.id}].`;
-      } else {
-        // TODO: handle this case
-        console.log((accError as AppError).message);
-        return `found existing github user [${existingGithubUser.githubId}] but no turtle account, TODO: handle this case!`;
+    const [account] = await core.getAccount(existingGithubUser.accountId);
+
+    return account;
+  },
+  async createNewPlatformAccount(userId: string): Promise<Account | undefined> {
+    const [appUser] = await core.getAppUserByUid(userId);
+
+    if (!appUser || !appUser.githubId) {
+      return;
+    }
+
+    const [githubUser, userError] = await createGithubUser(appUser.githubId);
+
+    if (!githubUser) {
+      console.log(`failed to create new platform user: ${(userError as AppError).message}`);
+      return undefined;
+    }
+
+    const [account] = await core.getAccount(githubUser.accountId);
+
+    return account;
+  },
+  async onTurtleAccountLinked(userId: string, account: Account, isNewAccount: boolean): Promise<void> {
+    if (!isNewAccount) {
+      const [appUser] = await core.getAppUserByUid(userId);
+
+      if (!appUser) {
+        return;
       }
-    } else {
-      const [githubUser] = await createGithubUser(githubId);
 
-      if (githubUser) {
-        const [account, accError] = await core.getAccount(githubUser.accountId);
+      // if the platform has an existing account, cancel all unclaimed tips related to that account.
+      const tips = await getUnclaimedTips(appUser.githubId);
 
-        if (account) {
-          await linkTurtleAccount(appUser, account, 'github.com');
-          return `created new github user [${githubUser.githubId}] and linked with new turtle account [${githubUser.accountId}].`;
-        } else {
-          console.log((accError as AppError).message);
-          return `failed get turtle account of new github user, try again later.`;
-        }
-      } else {
-        return `failed to create new github platform user, try again later.`;
+      if (tips.length > 0) {
+        await deleteUnclaimedTips(tips.map(t => t.id));
       }
     }
   }

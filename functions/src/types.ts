@@ -7,12 +7,11 @@ export interface Config {
 
 export interface ITurtleAccountLinker {
   accountProvider: AccountProvider;
-  updateAccountLink: (
-    authUser: admin.auth.UserRecord,
-    appUser: WebAppUser,
-    linkedAccounts: LinkedTurtleAccount[],
-    linkUserTurtleAccount: (appUser: WebAppUser, account: Account, provider: AccountProvider) => Promise<void>
-  ) => Promise<string>
+  updateAppUserPlatformData: (authUser: admin.auth.UserRecord) => Promise<void>,
+  validateAccountLinkRequirements: (authUser: admin.auth.UserRecord) => Promise<boolean>,
+  getExistingPlatformAccount: (userId: string) => Promise<Account | undefined>,
+  createNewPlatformAccount: (userId: string) => Promise<Account | undefined>,
+  onTurtleAccountLinked?: (userId: string, account: Account, isNewAccount: boolean) => Promise<void>
 }
 
 export interface WebAppUser {

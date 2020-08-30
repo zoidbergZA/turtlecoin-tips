@@ -6,74 +6,94 @@ import { WithdrawalPreview, ServiceError, Account, TrtlApp } from 'trtl-apps';
 import * as core from './core/coreModule';
 import { githHubAccountLinker } from './github/githubModule';
 import { AppError } from '../appError';
-import { WebAppUser, EmailUser, LinkedTurtleAccount, AccountProvider, ITurtleAccountLinker } from '../types';
+import { WebAppUser, EmailUser, LinkedTurtleAccount, ITurtleAccountLinker } from '../types';
 
 const emailAccountLinker: ITurtleAccountLinker = {
   accountProvider: 'password',
-  async updateAccountLink(authUser, appUser, linkedAccounts, linkTurtleAccount): Promise<string> {
+  async updateAppUserPlatformData(authUser: admin.auth.UserRecord): Promise<void> {
     const provider = authUser.providerData.find(p => p.providerId === 'password');
 
     if (!provider) {
-      return `failed to update email account link: no email provider found.`;
+      return;
+    }
+
+    const [appUser] = await core.getAppUserByUid(authUser.uid);
+
+    if (!appUser) {
+      return;
     }
 
     const emailAddress = provider.email;
+    const appUserUpdate: Partial<WebAppUser> = { };
 
-    if (appUser.email !== emailAddress || appUser.emailVerified !== authUser.emailVerified) {
-      const appUserUpdate: Partial<WebAppUser> = {
-        email: emailAddress,
-        username: emailAddress,
-        emailVerified: authUser.emailVerified
-      }
+    if (appUser.email !== emailAddress) {
+      appUserUpdate.email = emailAddress;
+    }
 
+    if (appUser.username !== emailAddress) {
+      appUserUpdate.username = emailAddress;
+    }
+
+    if (appUser.emailVerified !== authUser.emailVerified) {
+      appUser.emailVerified = authUser.emailVerified;
+    }
+
+    if (Object.keys(appUserUpdate).length > 0) {
       await admin.firestore().doc(`users/${appUser.uid}`).update(appUserUpdate);
     }
+  },
+  async validateAccountLinkRequirements(authUser: admin.auth.UserRecord): Promise<boolean> {
+    const provider = authUser.providerData.find(p => p.providerId === 'password');
 
-    if (!authUser.emailVerified) {
-      return `email account not yet verified, skipping further processing.`;
+    if (!provider) {
+      return false;
     }
 
-    if (appUser.email) {
-      const linkedEmailAcc = linkedAccounts.find(a => a.provider === 'password');
+    return authUser.emailVerified;
+  },
+  async getExistingPlatformAccount(userId: string): Promise<Account | undefined> {
+    const [appUser] = await core.getAppUserByUid(userId);
 
-      if (linkedEmailAcc) {
-        return `email account already linked.`;
-      } else {
-        // TODO: handle case where user has an email prop but no account linked.
-        return `appUser has email set but no linked account, TODO: handle this case!`;
-      }
+    if (!appUser) {
+      return;
     }
 
-    const [existingEmailUser] = await getEmailUser(emailAddress);
-
-    if (existingEmailUser) {
-      const [account, accError] = await core.getAccount(existingEmailUser.accountId);
-
-      if (account) {
-        await linkTurtleAccount(appUser, account, 'password');
-        return `found existing email user [${existingEmailUser.email}] account, linked existing turtle account [${account.id}].`;
-      } else {
-        // TODO: handle this case
-        console.log((accError as AppError).message);
-        return `found existing github user [${existingEmailUser.email}] but no turtle account, TODO: handle this case!`;
-      }
-    } else {
-      const [emailUser] = await createEmailUser(emailAddress);
-
-      if (emailUser) {
-        const [account, accError] = await core.getAccount(emailUser.accountId);
-
-        if (account) {
-          await linkTurtleAccount(appUser, account, 'password');
-          return `created new email user [${emailUser.email}] and linked with new turtle account [${emailUser.accountId}].`;
-        } else {
-          console.log((accError as AppError).message);
-          return `failed get turtle account of new github user, try again later.`;
-        }
-      } else {
-        return `failed to create new github platform user, try again later.`;
-      }
+    if (!appUser.email) {
+      return undefined;
     }
+
+    const [emailUser] = await getEmailUser(appUser.email);
+
+    if (!emailUser) {
+      return undefined;
+    }
+
+    const [account] = await core.getAccount(emailUser.accountId);
+
+    return account;
+  },
+  async createNewPlatformAccount(userId: string): Promise<Account | undefined> {
+    const [appUser] = await core.getAppUserByUid(userId);
+
+    if (!appUser || !appUser.email) {
+      return undefined;
+    }
+
+    const [emailUser, userErr] = await createEmailUser(appUser.email);
+
+    if (!emailUser) {
+      console.log((userErr as AppError).message);
+      return undefined;
+    }
+
+    const [account, accountErr] = await core.getAccount(emailUser.accountId);
+
+    if (!account) {
+      console.log((accountErr as AppError).message);
+      return undefined;
+    }
+
+    return account;
   }
 }
 
@@ -88,8 +108,8 @@ async function updateUserLinkedAccounts(authUser: admin.auth.UserRecord, appUser
   const linkedAccounts = await getAllLinkedTurtleAccounts(authUser.uid);
 
   accountLinkers.forEach(async linker => {
-    // we update linked accounts sequencially since each linker may want to update the user object
-    const result = await linker.updateAccountLink(authUser, appUser, linkedAccounts, linkUserTurtleAccount);
+    // we update linked accounts sequencially since each linker may update the user object
+    const result = await core.updatePlatformAccountLink(authUser, linkedAccounts, linker);
     console.log(`user [${authUser.uid}] account linker [${linker.accountProvider}] update result :: ${result}`);
   });
 }
@@ -206,7 +226,7 @@ export const userWithdraw = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError('invalid-argument', 'Invalid prepared withdrawal ID.');
   }
 
-  const [appUser, userError] = await getAppUserByUid(userId);
+  const [appUser, userError] = await core.getAppUserByUid(userId);
 
   if (!appUser) {
     console.log((userError as AppError).message);
@@ -280,69 +300,7 @@ export async function getAccountOwner(accountId: string): Promise<[WebAppUser | 
 
   const linkedAccount = accountsSnapshot.docs[0].data() as LinkedTurtleAccount;
 
-  return getAppUserByUid(linkedAccount.userId);
-}
-
-async function linkUserTurtleAccount(appUser: WebAppUser, account: Account, provider: AccountProvider): Promise<void> {
-  // check if account is already linked with a user
-  const matchQuery = await admin.firestore().collectionGroup('turtle_accounts')
-                      .where('accountId', '==', account.id)
-                      .get();
-
-  if (matchQuery.size > 0) {
-    const matchedAccount = matchQuery.docs[0].data() as LinkedTurtleAccount;
-    console.log(`turtle account [${matchedAccount.accountId}] already linked to user [${appUser.uid}]!`);
-
-    return;
-  }
-
-  // check if this should be the user's primary account
-  const snapshot = await admin.firestore()
-                    .collection(`users/${appUser.uid}/turtle_accounts`)
-                    .where('primary', '==', true)
-                    .get();
-
-  const isPrimary = snapshot.size === 0;
-  const promises: Promise<any>[] = [];
-
-  // add account to user's list of linked turtle_accounts
-  const linkedTurtleAccount: LinkedTurtleAccount = {
-    provider: provider,
-    accountId: account.id,
-    userId: appUser.uid,
-    primary: isPrimary,
-    balanceUnlocked: account.balanceUnlocked
-  }
-
-  const addAccountPromise = admin.firestore()
-    .doc(`users/${appUser.uid}/turtle_accounts/${account.id}`)
-    .set(linkedTurtleAccount);
-
-  promises.push(addAccountPromise);
-
-  if (isPrimary) {
-    const userUpdate: Partial<WebAppUser> = {
-      primaryAccountId: account.id
-    }
-
-    const updateUserPromise = admin.firestore()
-      .doc(`users/${appUser.uid}`)
-      .update(userUpdate);
-
-    promises.push(updateUserPromise);
-  }
-
-  await Promise.all(promises);
-}
-
-async function getAppUserByUid(uid: string): Promise<[WebAppUser | undefined, undefined | AppError]> {
-  const snapshot = await admin.firestore().doc(`users/${uid}`).get();
-
-  if (snapshot.exists) {
-    return [snapshot.data() as WebAppUser, undefined];
-  } else {
-    return [undefined, new AppError('app/user-not-found')];
-  }
+  return core.getAppUserByUid(linkedAccount.userId);
 }
 
 async function prepareWithdrawToAddress(
@@ -350,7 +308,7 @@ async function prepareWithdrawToAddress(
   amount: number,
   address: string
 ): Promise<[WithdrawalPreview | undefined, AppError | undefined]> {
-  const [appUser, userError] = await getAppUserByUid(userId);
+  const [appUser, userError] = await core.getAppUserByUid(userId);
 
   if (!appUser) {
     return [undefined, userError];
@@ -400,56 +358,6 @@ async function transferBalanceToPrimaryAccount(linkedAccount: LinkedTurtleAccoun
 
   console.log(`transferred [${linkedAccount.balanceUnlocked}] from user [${linkedAccount.userId}] linked account [${linkedAccount.accountId}] to primary account [${primaryAccount.accountId}]`);
 }
-
-// async function processNewEmailPasswordUser(user: admin.auth.UserRecord): Promise<void> {
-//   const provider = user.providerData.find(p => p.providerId === 'password');
-
-//   if (!provider) {
-//     console.log(`invalid email/password provider: ${JSON.stringify(user.providerData)} on auth user [${user.uid}].`);
-//     await admin.auth().deleteUser(user.uid);
-//     return;
-//   }
-
-//   if (!user.email) {
-//     console.log(`invalid email address for new auth user [${user.uid}]`);
-//     await admin.auth().deleteUser(user.uid);
-//     return;
-//   }
-
-//   const appUser: WebAppUser = {
-//     uid: user.uid,
-//     username: user.email,
-//     email: user.email,
-//     emailVerified: false,
-//     disclaimerAccepted: false
-//   }
-
-//   // TODO: this SHOULD be refactored
-//   await admin.firestore().doc(`users/${appUser.uid}`).set(appUser);
-
-//   // // TODO: do move this account creation/linking to the email verified function
-//   // const [existingEmailUser] = await getEmailUser(user.email);
-
-//   // if (existingEmailUser) {
-//   //   const [account, accError] = await core.getAccount(existingEmailUser.accountId);
-
-//   //   if (account) {
-//   //     await linkUserTurtleAccount(appUser, account); // TODO: handle case where linking failed
-//   //   } else {
-//   //     // TODO: handle this case
-//   //     console.log((accError as AppError).message);
-//   //   }
-//   // } else {
-//   //   const [account, userError] = await createEmailUser(user.email);
-
-//   //   if (account) {
-//   //     await linkUserTurtleAccount(appUser, account); // TODO: handle case where linking failed
-//   //   } else {
-//   //     //TODO: if we failed to create a github user (and turtle account), we should retry later
-//   //     console.log(`error creating account for app user [${appUser.uid}]: ${(userError as AppError).message}`);
-//   //   }
-//   // }
-// }
 
 export async function createEmailUser(email: string): Promise<[EmailUser | undefined, undefined | AppError]> {
   const [account, accError] = await TrtlApp.createAccount();

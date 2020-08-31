@@ -5,7 +5,7 @@ import Button from 'react-bulma-components/lib/components/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
-const CreateAccountForm = ({ errorMessage, onSubmit }) => {
+const LoginForm = ({ errorMessage, onSubmit }) => {
   const { handleSubmit, errors, control, formState } = useForm({ mode: 'onChange' });
 
   return (
@@ -48,20 +48,7 @@ const CreateAccountForm = ({ errorMessage, onSubmit }) => {
               </Form.Control>
             </Form.Field>
           </div>
-          <div>
-            <Form.Field>
-              <label>Confirm password</label>
-              <Form.Control>
-                <Controller
-                  as={Form.Input}
-                  name="confirmPassword"
-                  type="password"
-                  control={control}
-                  placeholder="re-enter password"
-                  rules={{ required: true }}
-                />
-              </Form.Control>
-            </Form.Field>
+          <div style={{paddingTop: "13px"}}>
             <Form.Control>
               <Button
                 color="primary"
@@ -70,7 +57,7 @@ const CreateAccountForm = ({ errorMessage, onSubmit }) => {
                 disabled={!formState.isValid}
               >
                 <FontAwesomeIcon icon={faChevronRight}></FontAwesomeIcon>
-                <span className="btn-icon-text">register</span>
+                <span className="btn-icon-text">login</span>
               </Button>
             </Form.Control>
           </div>
@@ -80,4 +67,4 @@ const CreateAccountForm = ({ errorMessage, onSubmit }) => {
   );
 }
 
-export default CreateAccountForm;
+export default LoginForm;

@@ -2,25 +2,39 @@ import React, { useState, useContext } from 'react';
 import app from '../../base';
 import * as firebase from 'firebase/app';
 import { Redirect } from 'react-router';
-// import { TurtleAccountContext } from '../../contexts/Account';
 import { AuthContext } from '../../contexts/Auth';
 import Heading from 'react-bulma-components/lib/components/heading';
 import Section from 'react-bulma-components/lib/components/section';
 import Container from 'react-bulma-components/lib/components/container';
 import CreateAccountForm from './CreateAccountForm';
 import Spinner from '../Spinner/Spinner';
+import LoginForm from './LoginForm';
 
 const Login = ({ history }) => {
-  // const { turtleAccount } = useContext(TurtleAccountContext);
   const { currentUser } = useContext(AuthContext);
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [busyMessage, setBusyMessage]   = useState(null);
+  const [registerErrorMessage, setRegisterErrorMessage] = useState(null);
+  const [loginErrorMessage, setLoginErrorMessage] = useState(null);
+  const [busyMessage, setBusyMessage] = useState(null);
+
+  const login = async (data) => {
+    setLoginErrorMessage(null);
+    setBusyMessage('login in...');
+
+    try {
+      await app.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
+      await app.auth().signInWithEmailAndPassword(data.email, data.password);
+    } catch (error) {
+      console.log(error);
+      setLoginErrorMessage(error.message);
+      setBusyMessage(null);
+    }
+  }
 
   const createAccount = async (data) => {
-    setErrorMessage(null);
+    setRegisterErrorMessage(null);
 
     if (data.password !== data.confirmPassword) {
-      setErrorMessage('password does not match.');
+      setRegisterErrorMessage('password does not match.');
       return;
     }
 
@@ -30,11 +44,9 @@ const Login = ({ history }) => {
       await app.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
       const credentials = await app.auth().createUserWithEmailAndPassword(data.email, data.password);
       await credentials.user.sendEmailVerification();
-
-      // history.push('/');
     } catch (error) {
       console.log(error);
-      setErrorMessage(error.message);
+      setRegisterErrorMessage(error.message);
       setBusyMessage(null);
     }
   }
@@ -59,10 +71,13 @@ const Login = ({ history }) => {
     <Section>
       <Container>
         <Heading>Sign in with email</Heading>
-        <Heading size={5}>Sign in</Heading>
+        <div style={{ width: "320px", display : 'inline-block' }}>
+          <LoginForm errorMessage={loginErrorMessage} onSubmit={login} />
+        </div>
+        <div style={{paddingTop: "40px"}}></div>
         <Heading size={5}>Create account</Heading>
         <div style={{ width: "320px", display : 'inline-block' }}>
-          <CreateAccountForm errorMessage={errorMessage} onSubmit={createAccount} />
+          <CreateAccountForm errorMessage={registerErrorMessage} onSubmit={createAccount} />
         </div>
       </Container>
     </Section>

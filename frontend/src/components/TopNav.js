@@ -1,4 +1,5 @@
 import React, { useContext, useState } from 'react'
+import { useLocation } from 'react-router';
 import { Link } from 'react-router-dom';
 import Navbar from 'react-bulma-components/lib/components/navbar';
 import { AuthContext } from '../contexts/Auth';
@@ -11,8 +12,9 @@ import logo from '../assets/logo-med.png';
 const TopNav = () => {
   const { currentUser } = useContext(AuthContext);
   const [ dropdownOpen, setDropdownOpen ] = useState(false);
+  const location = useLocation();
 
-  if (!currentUser) {
+  if (!currentUser || location.pathname === '/user-mgmt') {
     return null;
   }
 

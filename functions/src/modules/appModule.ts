@@ -23,23 +23,30 @@ const emailAccountLinker: ITurtleAccountLinker = {
       return;
     }
 
+    console.log(`update user platform data: password...`);
+    console.log(`authUser: ${JSON.stringify(authUser)}`);
+    console.log(`appUser: ${JSON.stringify(appUser)}`);
+
     const emailAddress = provider.email;
-    const appUserUpdate: Partial<WebAppUser> = { };
+    const update: Partial<WebAppUser> = { };
 
     if (appUser.email !== emailAddress) {
-      appUserUpdate.email = emailAddress;
+      update.email = emailAddress;
     }
 
     if (appUser.username !== emailAddress) {
-      appUserUpdate.username = emailAddress;
+      update.username = emailAddress;
     }
 
     if (appUser.emailVerified !== authUser.emailVerified) {
-      appUser.emailVerified = authUser.emailVerified;
+      update.emailVerified = authUser.emailVerified;
     }
 
-    if (Object.keys(appUserUpdate).length > 0) {
-      await admin.firestore().doc(`users/${appUser.uid}`).update(appUserUpdate);
+    console.log(`appUserUpdate: ${JSON.stringify(update)}`);
+    console.log(`appUserUpdate keys: ${Object.keys(update).length}`);
+
+    if (Object.keys(update).length > 0) {
+      await admin.firestore().doc(`users/${appUser.uid}`).update(update);
     }
   },
   async validateAccountLinkRequirements(authUser: admin.auth.UserRecord): Promise<boolean> {
@@ -55,7 +62,7 @@ const emailAccountLinker: ITurtleAccountLinker = {
     const [appUser] = await core.getAppUserByUid(userId);
 
     if (!appUser) {
-      return;
+      return undefined;
     }
 
     if (!appUser.email) {
@@ -99,19 +106,13 @@ const emailAccountLinker: ITurtleAccountLinker = {
 
 const accountLinkers: ITurtleAccountLinker[] = [githHubAccountLinker, emailAccountLinker];
 
-async function updateUserLinkedAccounts(authUser: admin.auth.UserRecord, appUser: WebAppUser): Promise<void> {
-  if (authUser.uid !== appUser.uid) {
-    console.log(`update linked accounts failed: authUser and appUser must have the same uid.`);
-    return;
-  }
-
+async function updateUserLinkedAccounts(authUser: admin.auth.UserRecord): Promise<void> {
   const linkedAccounts = await getAllLinkedTurtleAccounts(authUser.uid);
 
-  accountLinkers.forEach(async linker => {
-    // we update linked accounts sequencially since each linker may update the user object
+  for (const linker of accountLinkers) {
     const result = await core.updatePlatformAccountLink(authUser, linkedAccounts, linker);
     console.log(`user [${authUser.uid}] account linker [${linker.accountProvider}] update result :: ${result}`);
-  });
+  }
 }
 
 export const onNewAuthUserCreated = functions.auth.user().onCreate(async (authUser) => {
@@ -126,7 +127,7 @@ export const onNewAuthUserCreated = functions.auth.user().onCreate(async (authUs
   }
 
   await admin.firestore().doc(`users/${appUser.uid}`).set(appUser);
-  await updateUserLinkedAccounts(authUser, appUser);
+  await updateUserLinkedAccounts(authUser);
 });
 
 export const userAgreeDisclaimer = functions.https.onCall(async (data, context) => {
@@ -137,6 +138,20 @@ export const userAgreeDisclaimer = functions.https.onCall(async (data, context) 
   await admin.firestore().doc(`users/${context.auth.uid}`).update({
     disclaimerAccepted: true
   });
+
+  return { result: 'OK' };
+});
+
+export const callUpdateLinkedAccounts = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('failed-precondition', 'The function must be called while authenticated.');
+  }
+
+  const authUser = await admin.auth().getUser(context.auth.uid);
+
+  await updateUserLinkedAccounts(authUser);
+
+  return { result: 'OK' };
 });
 
 export const onAccountWrite = functions.firestore.document('accounts/{accountId}').onWrite(async (change, context) => {

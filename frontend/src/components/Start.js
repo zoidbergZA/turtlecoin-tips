@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import app from '../base';
+import { signInWithRedirect } from '../base';
 import * as firebase from 'firebase/app';
 import { AuthContext } from '../contexts/Auth';
 import Button from 'react-bulma-components/lib/components/button';
@@ -14,16 +14,15 @@ import logo from '../assets/logo-large.png';
 const Start = ({ history }) => {
   const { currentUser } = useContext(AuthContext);
 
-  const loginClickHandler = () => {
+  const loginClickHandler = async () => {
     var provider = new firebase.auth.GithubAuthProvider();
 
-    app.auth().setPersistence(firebase.auth.Auth.Persistence.NONE).then(() => {
-      app.auth().signInWithRedirect(provider).then(function(result) {
-        history.push('/');
-      }).catch(function(error) {
-        console.error(`${error.errorCode} :: ${error.errorMessage}`);
-      });
-    });
+    try {
+      await signInWithRedirect(provider);
+      history.push('/');
+    } catch (error) {
+      console.error(`${error.errorCode} :: ${error.errorMessage}`);
+    }
   }
 
   if (currentUser) {

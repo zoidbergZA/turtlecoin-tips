@@ -18,4 +18,28 @@ const config = {
 const app = firebase.initializeApp(config);
 firebase.analytics();
 
+// TODO: remove this export
 export default app;
+
+export async function createUserWithEmailAndPassword(email, password) {
+  await app.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
+  const credentials = await app.auth().createUserWithEmailAndPassword(email, password);
+
+  try {
+    // TODO: pass in continue url param: call cloud function with userId as query param to refresh linked accounts
+    // TODO: add continue url to whitelist
+    await credentials.user.sendEmailVerification();
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+export async function signInWithEmailAndPassword(email, password) {
+  await app.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
+  await app.auth().signInWithEmailAndPassword(email, password);
+}
+
+export async function signInWithRedirect(provider) {
+  await app.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
+  await app.auth().signInWithRedirect(provider);
+}

@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import app from '../../base';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from '../../base';
 import * as firebase from 'firebase/app';
 import { Redirect } from 'react-router';
 import { AuthContext } from '../../contexts/Auth';
@@ -21,8 +21,7 @@ const Login = ({ history }) => {
     setBusyMessage('login in...');
 
     try {
-      await app.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
-      await app.auth().signInWithEmailAndPassword(data.email, data.password);
+      await signInWithEmailAndPassword(data.email, data.password);
     } catch (error) {
       console.log(error);
       setLoginErrorMessage(error.message);
@@ -41,9 +40,7 @@ const Login = ({ history }) => {
     setBusyMessage('creating account...');
 
     try {
-      await app.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
-      const credentials = await app.auth().createUserWithEmailAndPassword(data.email, data.password);
-      await credentials.user.sendEmailVerification();
+      await createUserWithEmailAndPassword(data.email, data.password);
     } catch (error) {
       console.log(error);
       setRegisterErrorMessage(error.message);

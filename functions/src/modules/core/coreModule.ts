@@ -151,10 +151,10 @@ export async function updatePlatformAccountLink(
     if (linked) {
       if (linker.onTurtleAccountLinked) {
         await linker.onTurtleAccountLinked(authUser.uid, existingAccount, false);
-        return `existing account linked`;
-      } else {
-        return `failed to link existing platform account!`;
       }
+      return `existing account linked`;
+    } else {
+      return `failed to link existing platform account!`;
     }
   }
 

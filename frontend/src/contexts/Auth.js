@@ -29,11 +29,15 @@ export const AuthProvider = ({ children }) => {
         }
       }),
       map(userDoc => userDoc.data())
-    ).subscribe(webAppUser => {
+    ).subscribe(async (webAppUser) => {
       setCurrentUser(webAppUser);
 
       if (webAppUser) {
         firebase.analytics().setUserId(webAppUser.uid);
+
+        const updateLinkedAccounts = app.functions().httpsCallable('webApp-callUpdateLinkedAccounts');
+        await updateLinkedAccounts();
+
         setPending(false);
       }
     });

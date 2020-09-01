@@ -2,9 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import CopyBox from './CopyBox/CopyBox';
 import Heading from 'react-bulma-components/lib/components/heading';
-import Container from 'react-bulma-components/lib/components/container';
 import Image from 'react-bulma-components/lib/components/image';
-import Section from 'react-bulma-components/lib/components/section';
 import Button from 'react-bulma-components/lib/components/button';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronUp, faHistory, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';

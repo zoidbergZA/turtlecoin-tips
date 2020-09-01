@@ -1,6 +1,5 @@
 import React, { useState, useContext } from 'react';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from '../../base';
-import * as firebase from 'firebase/app';
 import { Redirect } from 'react-router';
 import { AuthContext } from '../../contexts/Auth';
 import Heading from 'react-bulma-components/lib/components/heading';

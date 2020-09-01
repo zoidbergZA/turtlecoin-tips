@@ -12,7 +12,7 @@ const UserManagement = () => {
   useEffect(() => {
     const mode        = query.get('mode');
     const actionCode  = query.get('oobCode');
-    const apiKey      = query.get('apiKey');
+    // const apiKey      = query.get('apiKey');
     const continueUrl = query.get('continueUrl');
     const lang        = query.get('lang');
 

@@ -2,11 +2,12 @@ import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import { DocumentData, Query } from '@google-cloud/firestore';
 import { WithdrawalPreview, ServiceError, Account, TrtlApp } from 'trtl-apps';
-
 import * as core from './core/coreModule';
 import { githHubAccountLinker } from './github/githubModule';
 import { AppError } from '../appError';
 import { WebAppUser, EmailUser, LinkedTurtleAccount, ITurtleAccountLinker } from '../types';
+
+const cors = require('cors')({origin: true});
 
 const emailAccountLinker: ITurtleAccountLinker = {
   accountProvider: 'password',
@@ -142,13 +143,29 @@ export const userAgreeDisclaimer = functions.https.onCall(async (data, context) 
   return { result: 'OK' };
 });
 
+// TODO: add auth/security to this function
+export const onEmailVerified = functions.https.onRequest(async (request, response) => {
+  cors(request, response, async () => {
+    const uid = request.query.uid as string;
+
+    if (!uid) {
+      response.status(400).send({ error: 'invalid uid.' });
+      return;
+    }
+
+    const authUser = await admin.auth().getUser(uid);
+    await updateUserLinkedAccounts(authUser);
+
+    response.send({ result: 'OK' });
+  });
+});
+
 export const callUpdateLinkedAccounts = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError('failed-precondition', 'The function must be called while authenticated.');
   }
 
   const authUser = await admin.auth().getUser(context.auth.uid);
-
   await updateUserLinkedAccounts(authUser);
 
   return { result: 'OK' };

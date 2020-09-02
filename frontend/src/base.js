@@ -26,11 +26,12 @@ export async function createUserWithEmailAndPassword(email, password) {
   const credentials = await app.auth().createUserWithEmailAndPassword(email, password);
 
   try {
-    console.log(`new auth user: ${app.auth().currentUser.uid}`);
+    const uid = app.auth().currentUser.uid;
 
-    // TODO: pass in continue url param: call cloud function with userId as query param to refresh linked accounts
-    // TODO: add continue url to whitelist
-    await credentials.user.sendEmailVerification();
+    // TODO: add continueUrl (custom domain) to whitelist
+    await credentials.user.sendEmailVerification({
+      url: `https://us-central1-github-tipbot.cloudfunctions.net/webApp-onEmailVerified?uid=${uid}`
+    });
   } catch (error) {
     console.log(error);
   }

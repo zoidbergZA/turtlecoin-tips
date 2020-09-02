@@ -19,6 +19,7 @@
     "@octokit/webhooks": "^7.6.4",
     "@types/lodash.groupby": "^4.6.6",
     "@types/lru-cache": "^5.1.0",
+    "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "express": "^4.17.1",
     "firebase-admin": "^8.13.0",

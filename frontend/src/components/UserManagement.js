@@ -7,7 +7,7 @@ import Spinner from './Spinner/Spinner';
 
 const UserManagement = () => {
   const [actionResult, setActionResult] = useState(null);
-  const query = useQueryParams();
+  const query = useQueryParams(); // TODO: use memo, add use effect dep
 
   useEffect(() => {
     const mode        = query.get('mode');
@@ -22,6 +22,7 @@ const UserManagement = () => {
       // try to apply the email verification code.
       try {
         await app.auth().applyActionCode(actionCode);
+        await fetch(continueUrl);
 
         // TODO: Display a confirmation message to the user.
         // You could also provide the user with a link back to the app.

@@ -9,7 +9,7 @@ import CreateAccountForm from './CreateAccountForm';
 import Spinner from '../Spinner/Spinner';
 import LoginForm from './LoginForm';
 
-const Login = ({ history }) => {
+const Login = () => {
   const { currentUser } = useContext(AuthContext);
   const [registerErrorMessage, setRegisterErrorMessage] = useState(null);
   const [loginErrorMessage, setLoginErrorMessage] = useState(null);

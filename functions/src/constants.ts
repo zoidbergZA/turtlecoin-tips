@@ -1,0 +1,1 @@
+export const GITHUB_LOGIN_URL = 'https://turtlecoin.tips/github';

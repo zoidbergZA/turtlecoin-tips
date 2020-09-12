@@ -20,7 +20,6 @@ export const AuthProvider = ({ children }) => {
     .pipe(
       switchMap(u => {
         if (u) {
-          // console.log(JSON.stringify(u))
           return doc(app.firestore().doc(`users/${u.uid}`));
         } else {
           setCurrentUser(null);
@@ -35,8 +34,8 @@ export const AuthProvider = ({ children }) => {
       if (webAppUser) {
         firebase.analytics().setUserId(webAppUser.uid);
 
-        const updateLinkedAccounts = app.functions().httpsCallable('webApp-callUpdateLinkedAccounts');
-        await updateLinkedAccounts();
+        // const updateLinkedAccounts = app.functions().httpsCallable('webApp-callUpdateLinkedAccounts');
+        // await updateLinkedAccounts();
 
         setPending(false);
       }

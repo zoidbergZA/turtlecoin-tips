@@ -1,6 +1,6 @@
 import React from 'react';
 import Moment from 'react-moment';
-import { Card, CardContent, Typography, makeStyles, Icon } from '@material-ui/core';
+import { Card, CardContent, Typography, makeStyles } from '@material-ui/core';
 import ArrowUpwardRoundedIcon from '@material-ui/icons/ArrowUpwardRounded';
 import ArrowDownwardRoundedIcon from '@material-ui/icons/ArrowDownwardRounded';
 import styles from './Transaction.module.scss';
@@ -43,12 +43,10 @@ const Transaction = ({ tx }) => {
           ? <ArrowDownwardRoundedIcon color="primary"/>
           : <ArrowUpwardRoundedIcon color="secondary"/>
         }
-        <Typography variant="body2" component="span" className={classes.itemGap, classes.time}>
+        <Typography variant="body2" component="span" className={[classes.itemGap, classes.time].join(' ')}>
           <Moment unix format="LT">{tx.timestamp / 1000}</Moment>
         </Typography>
-        <div className={classes.itemGap}>
-          {getPlatformIcon(tx)}
-        </div>
+        {getPlatformIcon(tx, classes)}
         <Typography variant="body2" component="span" className={classes.itemGap}>
         {tx.transferType}
         </Typography>
@@ -64,12 +62,12 @@ const Transaction = ({ tx }) => {
   );
 }
 
-function getPlatformIcon(tx) {
+function getPlatformIcon(tx, classes) {
   switch (tx.platform) {
     case 'webapp':
-      return <AppIcon/>
+      return <AppIcon className={classes.itemGap}/>
     case 'github':
-      return <GithubIcon/>
+      return <GithubIcon className={classes.itemGap}/>
     default:
       return null
   }

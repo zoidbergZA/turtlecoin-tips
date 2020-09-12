@@ -58,6 +58,7 @@ async function proccesConfirmingDeposit(deposit: Deposit): Promise<void> {
     id:           txDocRef.id,
     accountId:    deposit.accountId,
     timestamp:    deposit.createdDate,
+    platform:     'webapp',
     transferType: 'deposit',
     amount:       deposit.amount,
     fee:          0,

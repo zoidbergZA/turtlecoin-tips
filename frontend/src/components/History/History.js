@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { makeStyles } from '@material-ui/core';
-import Moment from 'react-moment';
 import { combineLatest } from 'rxjs';
 import { mergeAll } from 'rxjs/operators';
 import app from '../../base';
@@ -11,8 +10,12 @@ import Heading from 'react-bulma-components/lib/components/heading';
 import Container from 'react-bulma-components/lib/components/container';
 import Section from 'react-bulma-components/lib/components/section';
 import Spinner from '../Spinner/Spinner';
+import DateHeader from './DateHeader';
 
 const useStyles = makeStyles({
+  root: {
+    textAlign: 'left'
+  },
   txItem: {
     marginTop: '15px'
   }
@@ -51,13 +54,13 @@ const History = () => {
 
     for (const [index, tx] of transactions.entries()) {
       if (index === 0) {
-        items.push(<Moment unix key={index} format="MMMM D, YYYY">{tx.timestamp / 1000}</Moment>);
+        items.push(<DateHeader unix key={index} timestamp={tx.timestamp}/>);
       } else {
         const prevTxDay = new Date(transactions[index-1].timestamp).getDay();
         const thisTxDay = new Date(tx.timestamp).getDay();
 
         if (prevTxDay !== thisTxDay) {
-          items.push(<Moment unix key={index} format="MMMM D, YYYY">{tx.timestamp / 1000}</Moment>);
+          items.push(<DateHeader unix key={index} timestamp={tx.timestamp}/>);
         }
       }
 
@@ -68,7 +71,11 @@ const History = () => {
       ));
     }
 
-    history = items;
+    history = (
+      <div className={classes.root}>
+        {items}
+      </div>
+    );
   } else {
     history = <Spinner/>
   }

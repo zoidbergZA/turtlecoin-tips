@@ -1,13 +1,27 @@
 import React from 'react';
 import Moment from 'react-moment';
-import { Card, CardContent, Typography, makeStyles } from '@material-ui/core';
+import { Card, CardContent, Typography, makeStyles, Icon } from '@material-ui/core';
+import ArrowUpwardRoundedIcon from '@material-ui/icons/ArrowUpwardRounded';
+import ArrowDownwardRoundedIcon from '@material-ui/icons/ArrowDownwardRounded';
 import styles from './Transaction.module.scss';
+import AppIcon from 'components/SvgIcons/AppIcon';
+import GithubIcon from 'components/SvgIcons/GithubIcon';
 
 const useStyles = makeStyles({
   content: {
     display: 'flex',
     flexDirection: 'row',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  spacer: {
+    flexGrow: 1
+  },
+  itemGap: {
+   marginLeft: '10px'
+  },
+  time: {
+    minWidth: '80px'
   }
 });
 
@@ -24,21 +38,41 @@ const Transaction = ({ tx }) => {
   return (
     <Card>
       <CardContent className={classes.content}>
-        <Typography variant="body2" component="span">
+        {
+          tx.amount > 0
+          ? <ArrowDownwardRoundedIcon color="primary"/>
+          : <ArrowUpwardRoundedIcon color="secondary"/>
+        }
+        <Typography variant="body2" component="span" className={classes.itemGap, classes.time}>
           <Moment unix format="LT">{tx.timestamp / 1000}</Moment>
         </Typography>
-        <Typography variant="body2" component="span">
+        <div className={classes.itemGap}>
+          {getPlatformIcon(tx)}
+        </div>
+        <Typography variant="body2" component="span" className={classes.itemGap}>
         {tx.transferType}
         </Typography>
-        <Typography variant="body2" component="span">
+        <Typography variant="body2" component="span" className={classes.itemGap}>
           {getInfoText(tx)}
         </Typography>
+        <div className={classes.spacer}></div>
         <Typography variant="body2" component="span">
           {getAmountText(tx)}
         </Typography>
       </CardContent>
     </Card>
   );
+}
+
+function getPlatformIcon(tx) {
+  switch (tx.platform) {
+    case 'webapp':
+      return <AppIcon/>
+    case 'github':
+      return <GithubIcon/>
+    default:
+      return null
+  }
 }
 
 function getInfoText(tx) {

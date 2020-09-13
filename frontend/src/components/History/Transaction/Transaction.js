@@ -1,11 +1,13 @@
 import React from 'react';
 import Moment from 'react-moment';
-import { Card, CardContent, Typography, makeStyles } from '@material-ui/core';
+import { Card, CardContent, Typography, makeStyles, Hidden } from '@material-ui/core';
+import withWidth, { isWidthUp } from '@material-ui/core/withWidth';
 import ArrowUpwardRoundedIcon from '@material-ui/icons/ArrowUpwardRounded';
 import ArrowDownwardRoundedIcon from '@material-ui/icons/ArrowDownwardRounded';
 import styles from './Transaction.module.scss';
 import AppIcon from 'components/SvgIcons/AppIcon';
 import GithubIcon from 'components/SvgIcons/GithubIcon';
+import CopyBox from 'components/CopyBox/CopyBox';
 
 const useStyles = makeStyles({
   content: {
@@ -22,10 +24,14 @@ const useStyles = makeStyles({
   },
   time: {
     minWidth: '80px'
+  },
+  hash: {
+    fontFamily: 'Hack',
+    fontSize: 'small'
   }
 });
 
-const Transaction = ({ tx }) => {
+const Transaction = ({ tx, width }) => {
   const txInfoStyles = [styles.info];
   const amountStyles = [];
   const classes = useStyles();
@@ -47,12 +53,17 @@ const Transaction = ({ tx }) => {
           <Moment unix format="LT">{tx.timestamp / 1000}</Moment>
         </Typography>
         {getPlatformIcon(tx, classes)}
-        <Typography variant="body2" component="span" className={classes.itemGap}>
-        {tx.transferType}
-        </Typography>
-        <Typography variant="body2" component="span" className={classes.itemGap}>
-          {getInfoText(tx)}
-        </Typography>
+        <Hidden xsDown>
+          <Typography variant="body2" component="span" className={classes.itemGap}>
+            {getInfoText(tx)}
+          </Typography>
+        </Hidden>
+        <Hidden xsDown mdUp>
+          {getTxHash(tx, true, classes)}
+        </Hidden>
+        <Hidden smDown>
+          {getTxHash(tx, false, classes)}
+        </Hidden>
         <div className={classes.spacer}></div>
         <Typography variant="body2" component="span">
           {getAmountText(tx)}
@@ -73,21 +84,31 @@ function getPlatformIcon(tx, classes) {
   }
 }
 
+function getTxHash(tx, short, classes) {
+  if (!tx.txHash) {
+    return null;
+  }
+
+  if (short) {
+    return (
+      <Typography variant="body2" component="span" className={[classes.itemGap, classes.hash].join(' ')}>
+        hash: {truncate(tx.txHash, 14)}
+      </Typography>
+    );
+  } else {
+    return <CopyBox data={tx.txHash}></CopyBox>
+  }
+}
+
 function getInfoText(tx) {
   switch (tx.transferType) {
-    case 'deposit':
-    case 'withdrawal':
-      if (tx.status === 'failed')
-        return 'FAILED'
-      else
-        return tx.txHash;
     case 'tip':
       if (tx.amount > 0)
-      return `from @${tx.senderUsername}`;
+        return `tip from @${tx.senderUsername}`;
       else
-        return `to @${tx.recipientUsername}`;
+        return `tip to @${tx.recipientUsername}`;
     case 'tipRefund':
-      return `from @${tx.senderUsername}`;
+      return `tip refund from @${tx.senderUsername}`;
     default:
       return '';
   }
@@ -105,4 +126,21 @@ function getAmountText(tx) {
   return text;
 }
 
-export default Transaction;
+function truncate(fullStr, strLen) {
+  if (fullStr.length <= strLen) {
+    return fullStr;
+  }
+
+  const separator = '...';
+
+  const sepLen = separator.length,
+      charsToShow = strLen - sepLen,
+      frontChars = Math.ceil(charsToShow/2),
+      backChars = Math.floor(charsToShow/2);
+
+  return fullStr.substr(0, frontChars) +
+         separator +
+         fullStr.substr(fullStr.length - backChars);
+};
+
+export default withWidth()(Transaction);

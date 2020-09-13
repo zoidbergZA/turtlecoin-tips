@@ -130,17 +130,18 @@ export async function updatePlatformAccountLink(
   linkedAccounts: LinkedTurtleAccount[],
   linker: ITurtleAccountLinker
 ) {
+  const provider = linker.accountProvider;
   const linkedAcc = linkedAccounts.find(a => a.provider === linker.accountProvider);
 
   if (linkedAcc) {
-    return `${linker.accountProvider} account already linked.`;
+    return `${provider} account already linked.`;
   }
 
   // update user data with platform info if needed
   await linker.updateAppUserPlatformData(authUser);
 
   if (!await linker.validateAccountLinkRequirements(authUser)) {
-    return `account link requirements not met.`;
+    return `${provider} account link requirements not met.`;
   }
 
   const existingAccount = await linker.getExistingPlatformAccount(authUser.uid);
@@ -152,9 +153,9 @@ export async function updatePlatformAccountLink(
       if (linker.onTurtleAccountLinked) {
         await linker.onTurtleAccountLinked(authUser.uid, existingAccount, false);
       }
-      return `existing account linked`;
+      return `${provider} existing account linked`;
     } else {
-      return `failed to link existing platform account!`;
+      return `${provider} failed to link existing platform account!`;
     }
   }
 
@@ -167,12 +168,12 @@ export async function updatePlatformAccountLink(
       if (linker.onTurtleAccountLinked) {
         await linker.onTurtleAccountLinked(authUser.uid, newAccount, true);
       }
-      return `linked new platform account`;
+      return `${provider} linked new platform account`;
     } else {
-      return `failed to link new platform account!`;
+      return `${provider} failed to link new platform account!`;
     }
   } else {
-    return `failed to create new platfom account`;
+    return `${provider} failed to create new platfom account`;
   }
 }
 

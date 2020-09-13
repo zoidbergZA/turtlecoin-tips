@@ -35,7 +35,7 @@ const emailAccountLinker: ITurtleAccountLinker = {
       update.email = emailAddress;
     }
 
-    if (appUser.username !== emailAddress) {
+    if (appUser.username === authUser.uid) {
       update.username = emailAddress;
     }
 
@@ -110,9 +110,11 @@ const accountLinkers: ITurtleAccountLinker[] = [githHubAccountLinker, emailAccou
 async function updateUserLinkedAccounts(authUser: admin.auth.UserRecord): Promise<void> {
   const linkedAccounts = await getAllLinkedTurtleAccounts(authUser.uid);
 
-  for (const linker of accountLinkers) {
-    const result = await core.updatePlatformAccountLink(authUser, linkedAccounts, linker);
-    console.log(`user [${authUser.uid}] account linker [${linker.accountProvider}] update result :: ${result}`);
+  const jobs = accountLinkers.map(l => core.updatePlatformAccountLink(authUser, linkedAccounts, l));
+  const results = await Promise.all(jobs);
+
+  for (const result of results) {
+    console.log(`user [${authUser.uid}] account linker update result :: ${result}`);
   }
 }
 
@@ -122,7 +124,7 @@ export const onNewAuthUserCreated = functions.auth.user().onCreate(async (authUs
 
   const appUser: WebAppUser = {
     uid: authUser.uid,
-    username: 'wallet user',
+    username: authUser.uid,
     disclaimerAccepted: false,
     emailVerified: false
   }

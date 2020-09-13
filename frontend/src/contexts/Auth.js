@@ -34,8 +34,8 @@ export const AuthProvider = ({ children }) => {
       if (webAppUser) {
         firebase.analytics().setUserId(webAppUser.uid);
 
-        // const updateLinkedAccounts = app.functions().httpsCallable('webApp-callUpdateLinkedAccounts');
-        // await updateLinkedAccounts();
+        const updateLinkedAccounts = app.functions().httpsCallable('webApp-callUpdateLinkedAccounts');
+        await updateLinkedAccounts();
 
         setPending(false);
       }

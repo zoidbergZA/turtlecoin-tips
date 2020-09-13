@@ -35,7 +35,7 @@ export const githHubAccountLinker: ITurtleAccountLinker = {
       appUserUpdate.githubId = githubId
     }
 
-    if (appUser.username !== username) {
+    if (appUser.username === authUser.uid) {
       appUserUpdate.username = username;
     }
 

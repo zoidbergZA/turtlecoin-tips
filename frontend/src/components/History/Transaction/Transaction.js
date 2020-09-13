@@ -1,7 +1,7 @@
 import React from 'react';
 import Moment from 'react-moment';
 import { Card, CardContent, Typography, makeStyles, Hidden } from '@material-ui/core';
-import withWidth, { isWidthUp } from '@material-ui/core/withWidth';
+import withWidth from '@material-ui/core/withWidth';
 import ArrowUpwardRoundedIcon from '@material-ui/icons/ArrowUpwardRounded';
 import ArrowDownwardRoundedIcon from '@material-ui/icons/ArrowDownwardRounded';
 import styles from './Transaction.module.scss';

@@ -32,12 +32,10 @@ const Home = () => {
   }
 
   return (
-    <Section>
-      <Container>
-        {verifyEmailMessage}
-        {accountView}
-      </Container>
-    </Section>
+    <div>
+      {verifyEmailMessage}
+      {accountView}
+    </div>
   );
 }
 

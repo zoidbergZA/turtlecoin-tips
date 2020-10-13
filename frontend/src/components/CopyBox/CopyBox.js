@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import styles from './copyBox.module.scss'
-import Icon from 'react-bulma-components/lib/components/icon';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCopy, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { green } from '@material-ui/core/colors';
+import { FileCopy, Check } from '@material-ui/icons';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
+import styles from './copyBox.module.scss'
 
 const CopyBox = ({ data }) => {
   const [copied, setCopied] = useState(false);
@@ -16,8 +15,6 @@ const CopyBox = ({ data }) => {
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
 
-  const iconStyles = copied ? [styles.green] : [];
-
   return (
     <div className={styles.box}>
       <div className={styles.item}>
@@ -25,9 +22,7 @@ const CopyBox = ({ data }) => {
       </div>
       <div className={styles.btn}>
       <CopyToClipboard text={data} onCopy={copyAddressHandler}>
-        <Icon>
-          <FontAwesomeIcon className={iconStyles.join(' ')} icon={copied ? faCheck : faCopy} />
-        </Icon>
+        {copied ? <Check style={{ color: green[500] }} /> : <FileCopy />}
       </CopyToClipboard>
       </div>
     </div>

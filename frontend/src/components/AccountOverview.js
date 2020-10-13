@@ -21,8 +21,6 @@ const AccountOverview = ( {depositAddress, depositQrCode, balanceLocked, balance
       <div style={{ width: 320, display : 'inline-block' }}>
         <Image src={depositQrCode} size="1by1"></Image>
       </div>
-      <p>deposit address:</p>
-      <CopyBox data={depositAddress} />
       <div style={{ marginTop: "15px" }}>
         <Button.Group position="centered">
           <Button color="primary" to="/withdraw" renderAs={Link}>

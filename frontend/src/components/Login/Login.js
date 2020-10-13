@@ -1,10 +1,8 @@
 import React, { useState, useContext } from 'react';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from '../../base';
 import { Redirect } from 'react-router';
+import Typography from '@material-ui/core/Typography';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from '../../base';
 import { AuthContext } from '../../contexts/Auth';
-import Heading from 'react-bulma-components/lib/components/heading';
-import Section from 'react-bulma-components/lib/components/section';
-import Container from 'react-bulma-components/lib/components/container';
 import CreateAccountForm from './CreateAccountForm';
 import Spinner from '../Spinner/Spinner';
 import LoginForm from './LoginForm';
@@ -53,30 +51,28 @@ const Login = () => {
 
   if (busyMessage) {
     return (
-      <Section>
-        <Container>
-          <div style={{ paddingTop: "50px", paddingBottom: "20px" }}>
-            <Spinner message={busyMessage} />
-          </div>
-        </Container>
-      </Section>
+      <div style={{ paddingTop: "50px", paddingBottom: "20px" }}>
+        <Spinner message={busyMessage} />
+      </div>
     );
   }
 
   return (
-    <Section>
-      <Container>
-        <Heading>Sign in with email</Heading>
-        <div style={{ width: "320px", display : 'inline-block' }}>
-          <LoginForm errorMessage={loginErrorMessage} onSubmit={login} />
-        </div>
-        <div style={{paddingTop: "40px"}}></div>
-        <Heading size={5}>Create account</Heading>
-        <div style={{ width: "320px", display : 'inline-block' }}>
-          <CreateAccountForm errorMessage={registerErrorMessage} onSubmit={createAccount} />
-        </div>
-      </Container>
-    </Section>
+    <React.Fragment>
+      <Typography variant="h4" component="h4">
+        Sign in with email
+      </Typography>
+      <div style={{ width: "320px", display : 'inline-block' }}>
+        <LoginForm errorMessage={loginErrorMessage} onSubmit={login} />
+      </div>
+      <div style={{paddingTop: "40px"}}></div>
+      <Typography variant="h4" component="h4">
+        Create account
+      </Typography>
+      <div style={{ width: "320px", display : 'inline-block' }}>
+        <CreateAccountForm errorMessage={registerErrorMessage} onSubmit={createAccount} />
+      </div>
+    </React.Fragment>
   );
 }
 

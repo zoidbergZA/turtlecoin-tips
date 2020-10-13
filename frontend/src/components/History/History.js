@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { makeStyles } from '@material-ui/core';
+import Typography from '@material-ui/core/Typography';
 import { combineLatest } from 'rxjs';
 import { mergeAll } from 'rxjs/operators';
 import app from '../../base';
 import { collectionData } from 'rxfire/firestore';
 import { AuthContext } from 'contexts/Auth';
 import Transaction from './Transaction/Transaction';
-import Heading from 'react-bulma-components/lib/components/heading';
-import Container from 'react-bulma-components/lib/components/container';
-import Section from 'react-bulma-components/lib/components/section';
 import Spinner from '../Spinner/Spinner';
 import DateHeader from './DateHeader';
 
@@ -82,12 +80,10 @@ const History = () => {
 
   return (
     <React.Fragment>
-      <Heading>Transaction history</Heading>
-      <Section>
-        <Container>
-          {history}
-        </Container>
-      </Section>
+    <Typography variant="h4" component="h4">
+      Transaction history
+    </Typography>
+      {history}
     </React.Fragment>
   );
 }

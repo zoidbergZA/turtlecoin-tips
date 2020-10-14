@@ -18,9 +18,6 @@ import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import History from '../components/History/History';
 import { AuthContext } from '../contexts/Auth';
-import Icon from 'react-bulma-components/lib/components/icon';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faLock } from '@fortawesome/free-solid-svg-icons';
 import app from '../base';
 import logo from '../assets/logo-med.png';
 

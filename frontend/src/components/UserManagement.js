@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Section from 'react-bulma-components/lib/components/section';
-import Container from 'react-bulma-components/lib/components/container';
 import app from '../base';
 import useQueryParams from '../hooks/useQueryParams';
 import Spinner from './Spinner/Spinner';
@@ -65,22 +63,10 @@ const UserManagement = () => {
   }, []);
 
   if (actionResult) {
-    return (
-      <Section>
-        <Container>
-            {actionResult}
-        </Container>
-      </Section>
-    )
+    return actionResult;
   }
 
-  return (
-    <Section>
-      <Container>
-          <Spinner />
-      </Container>
-    </Section>
-  );
+  return <Spinner />
 }
 
 export default UserManagement;

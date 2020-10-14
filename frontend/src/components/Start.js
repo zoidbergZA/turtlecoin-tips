@@ -1,15 +1,10 @@
 import React, { useContext } from 'react';
-import { signInWithRedirect } from '../base';
-import * as firebase from 'firebase/app';
-import { AuthContext } from '../contexts/Auth';
-import Button from 'react-bulma-components/lib/components/button';
-import Heading from 'react-bulma-components/lib/components/heading';
-import Section from 'react-bulma-components/lib/components/section';
-import Container from 'react-bulma-components/lib/components/container';
 import { Redirect } from 'react-router';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faEnvelope } from '@fortawesome/free-solid-svg-icons';
-import { faGithub } from '@fortawesome/free-brands-svg-icons';
+import * as firebase from 'firebase/app';
+import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
+import { signInWithRedirect } from '../base';
+import { AuthContext } from '../contexts/Auth';
 import logo from '../assets/logo-large.png';
 
 const Start = ({ history, email, github }) => {
@@ -50,29 +45,30 @@ const Start = ({ history, email, github }) => {
   }
 
   return (
-    <Section>
-      <Container>
-        <Heading>TurtleCoin Tips</Heading>
-        <div style={{ margin: "40px" }}>
-          <img src={logo} width="200" alt="logo" />
-        </div>
-        <div style={btnsContainer}>
-          {email &&
-            <Button style={btnStyle} onClick={emailLoginHandler}>
-              <FontAwesomeIcon icon={faEnvelope}></FontAwesomeIcon>
-              <span style={btnText}> Login with email</span>
-            </Button>
-          }
-          {github &&
-            <Button style={btnStyle} onClick={githubLoginHandler}>
-              <FontAwesomeIcon icon={faGithub}></FontAwesomeIcon>
-              <span style={btnText}> Login with Github</span>
-            </Button>
-          }
-        </div>
-      </Container>
-    </Section>
+    <React.Fragment>
+      <Typography variant="h3" component="h3">
+        TurtleCoin Tips
+      </Typography>
+      <div style={{ margin: "40px" }}>
+        <img src={logo} width="200" alt="logo" />
+      </div>
+      <div style={btnsContainer}>
+        {email &&
+          <Button style={btnStyle} variant="outlined" onClick={emailLoginHandler}>
+            <span style={btnText}> Login with email</span>
+          </Button>
+        }
+        {github &&
+          <Button style={btnStyle} variant="outlined" onClick={githubLoginHandler}>
+            <span style={btnText}> Login with Github</span>
+          </Button>
+        }
+      </div>
+    </React.Fragment>
   );
 }
 
 export default Start;
+
+// <FontAwesomeIcon icon={faEnvelope}></FontAwesomeIcon>
+// <FontAwesomeIcon icon={faGithub}></FontAwesomeIcon>

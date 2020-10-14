@@ -1,14 +1,13 @@
 import React from 'react';
-import Heading from 'react-bulma-components/lib/components/heading';
-import Section from 'react-bulma-components/lib/components/section';
-import Container from 'react-bulma-components/lib/components/container';
+import Typography from '@material-ui/core/Typography';
 
 const PrivacyPolicy = () => {
   return (
-    <Section>
-      <Container>
-        <Heading>Privacy Policy</Heading>
-        <p>
+    <React.Fragment>
+      <Typography variant="h4" component="h4">
+        Privacy Policy
+      </Typography>
+      <p>
         TRTL Apps built the TurtleCoin Tips app as
         an Open Source app. This SERVICE is provided by
         TRTL Apps at no cost and is intended for use as
@@ -106,8 +105,7 @@ const PrivacyPolicy = () => {
         If you have any questions or suggestions about my
         Privacy Policy, do not hesitate to contact me at trtlapps@gmail.com.
       </p>
-      </Container>
-    </Section>
+    </React.Fragment>
   );
 }
 

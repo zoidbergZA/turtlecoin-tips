@@ -43,6 +43,6 @@ export async function signInWithEmailAndPassword(email, password) {
 }
 
 export async function signInWithRedirect(provider) {
-  await app.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
+  await app.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
   await app.auth().signInWithRedirect(provider);
 }

@@ -40,7 +40,7 @@ const useStyles = makeStyles(theme => ({
     display: 'flex',
   },
   drawer: {
-    [theme.breakpoints.up('sm')]: {
+    [theme.breakpoints.up('md')]: {
       width: drawerWidth,
       flexShrink: 0,
     },
@@ -50,7 +50,7 @@ const useStyles = makeStyles(theme => ({
   },
   menuButton: {
     marginRight: theme.spacing(2),
-    [theme.breakpoints.up('sm')]: {
+    [theme.breakpoints.up('md')]: {
       display: 'none',
     },
   },
@@ -132,7 +132,7 @@ function TopNav() {
             {drawer}
           </Drawer>
         </Hidden>
-        <Hidden xsDown implementation="css">
+        <Hidden smDown implementation="css">
           <Drawer
             className={classes.drawer}
             variant="permanent"

@@ -6,6 +6,7 @@ import { AuthContext } from '../contexts/Auth';
 import { TurtleAccountContext } from '../contexts/Account';
 import AccountOverview from './AccountOverview';
 import Spinner from './Spinner/Spinner';
+import History from './History/History';
 
 const Home = () => {
   let accountView;
@@ -30,7 +31,7 @@ const Home = () => {
   }
 
   if (turtleAccount) {
-    accountView = <AccountOverview {...turtleAccount} />
+    accountView = <History />
   } else if (currentUser.primaryAccountId) {
     accountView = <Spinner />;
   }

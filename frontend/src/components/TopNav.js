@@ -2,6 +2,8 @@ import React, { useContext, useState } from 'react'
 import { useLocation } from 'react-router';
 import { BrowserRouter as Router, Route } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import Box from '@material-ui/core/Box';
+import Container from '@material-ui/core/Container';
 import AppBar from '@material-ui/core/AppBar';
 import Typography from '@material-ui/core/Typography';
 import CssBaseline from '@material-ui/core/CssBaseline';
@@ -57,6 +59,7 @@ const useStyles = makeStyles(theme => ({
     width: drawerWidth
   },
   content: {
+    width: 'calc(100% - 240px)',
     flexGrow: 1,
     padding: theme.spacing(3),
   },
@@ -143,18 +146,20 @@ function TopNav() {
         </Hidden>
       </nav>
       <div className={classes.content}>
-        <div className={classes.toolbar} />
-        <TurtleAccountProvider>
-          <PrivateRoute exact path="/" component={Home}/>
-          <PrivateRoute exact path="/withdraw" component={Withdraw}/>
-          <PrivateRoute exact path="/history" component={History}/>
-          <PrivateRoute exact path="/help" component={Help}/>
-        </TurtleAccountProvider>
-        <Route exact path="/start" render={(props) => <Start {...props} email={false} github={true} />}/>
-        <Route exact path="/github" render={(props) => <Start {...props} github={true} />}/>
-        <Route exact path="/login" component={Login}/>
-        <Route exact path="/privacy-policy" component={PrivacyPolicy}/>
-        <Route exact path="/user-mgmt" component={UserManagement}/>
+      <div className={classes.toolbar} />
+        <Container maxWidth='md'>
+          <TurtleAccountProvider>
+            <PrivateRoute exact path="/" component={Home}/>
+            <PrivateRoute exact path="/withdraw" component={Withdraw}/>
+            <PrivateRoute exact path="/history" component={History}/>
+            <PrivateRoute exact path="/help" component={Help}/>
+          </TurtleAccountProvider>
+            <Route exact path="/start" render={(props) => <Start {...props} email={false} github={true} />}/>
+            <Route exact path="/github" render={(props) => <Start {...props} github={true} />}/>
+            <Route exact path="/login" component={Login}/>
+            <Route exact path="/privacy-policy" component={PrivacyPolicy}/>
+            <Route exact path="/user-mgmt" component={UserManagement}/>
+        </Container>
       </div>
     </div>
   );

@@ -19,6 +19,13 @@ const useStyles = makeStyles({
   spacer: {
     flexGrow: 1
   },
+  copyBox: {
+    backgroundColor: '#ff0000',
+    flexFlow: 'row wrap',
+    overflow: 'hidden',
+    wordWrap: 'break-word',
+    overflowWrap: 'break-word'
+  },
   itemGap: {
    marginLeft: '10px'
   },
@@ -96,7 +103,11 @@ function getTxHash(tx, short, classes) {
       </Typography>
     );
   } else {
-    return <CopyBox data={tx.txHash}></CopyBox>
+    return (
+      <div className={classes.copyBox}>
+        <CopyBox data={tx.txHash}></CopyBox>
+      </div>
+    )
   }
 }
 

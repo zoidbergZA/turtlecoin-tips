@@ -1,10 +1,8 @@
 import React, { useContext } from 'react';
-import Typography from '@material-ui/core/Typography';
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
+import { Alert, AlertTitle } from '@material-ui/lab';
+
 import { AuthContext } from '../contexts/Auth';
 import { TurtleAccountContext } from '../contexts/Account';
-import AccountOverview from './AccountOverview';
 import Spinner from './Spinner/Spinner';
 import History from './History/History';
 
@@ -17,16 +15,10 @@ const Home = () => {
 
   if (currentUser && currentUser.email && !currentUser.emailVerified) {
     verifyEmailMessage = (
-      <Card variant="outlined">
-        <CardContent>
-          <Typography variant="h5" component="h2">
-            Verify your email address
-          </Typography>
-          <Typography variant="body2" component="p">
-            Your email address <span style={{ textDecoration: "underline" }}>{currentUser.email}</span> has not yet been verified. Verify your email address to access the coins associated with that account. Click here to re-send the verification email.
-          </Typography>
-        </CardContent>
-      </Card>
+      <Alert severity="info">
+        <AlertTitle>Verify your email address</AlertTitle>
+        Your email address <span style={{ textDecoration: "underline" }}>{currentUser.email}</span> has not yet been verified. Verify your email address to access the coins associated with that account. Click here to re-send the verification email.
+      </Alert>
     )
   }
 

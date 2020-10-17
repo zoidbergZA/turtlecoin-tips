@@ -1,23 +1,20 @@
 import React from 'react';
 import styles from './withdrawPreview.module.scss';
-import Section from 'react-bulma-components/lib/components/section';
-import Container from 'react-bulma-components/lib/components/container';
-import Button from 'react-bulma-components/lib/components/button';
-import Heading from 'react-bulma-components/lib/components/heading';
-import Level from 'react-bulma-components/lib/components/level';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
 
 const WithdrawPreview = ({ preparedTx, onConfirm, onBack }) => {
-  const fees = preparedTx.fees.nodeFee + preparedTx.fees.serviceFee + preparedTx.fees.txFee;
+  const { nodeFee, serviceFee, txFee } = preparedTx.fees;
+  const totalFees = nodeFee + serviceFee + txFee;
 
   return (
-    <Section>
-      <Container>
-        <Heading>Confirm send</Heading>
-        <p className="address-text">{preparedTx.address}</p>
-        <div className={styles["amounts-box"]}>
-          <table>
+    <React.Fragment>
+      <Typography variant="h4" component="h4">
+        Confirm send
+      </Typography>
+      <p className="address-text">{preparedTx.address}</p>
+      <div className={styles["amounts-box"]}>
+        <table>
           <tbody>
             <tr>
               <td className={styles["tbl-label"]}>amount:</td>
@@ -25,29 +22,18 @@ const WithdrawPreview = ({ preparedTx, onConfirm, onBack }) => {
             </tr>
             <tr>
               <td className={styles["tbl-label"]}>fee:</td>
-              <td className={styles["tbl-value"]}>{fees / 100} TRTL</td>
+              <td className={styles["tbl-value"]}>{totalFees / 100} TRTL</td>
             </tr>
           </tbody>
         </table>
-        </div>
-        <Section>
-          <Level>
-            <Level.Item type="left">
-              <Button onClick={onBack}>
-                <FontAwesomeIcon icon={faChevronLeft}></FontAwesomeIcon>
-                <span className="btn-icon-text">back</span>
-              </Button>
-            </Level.Item>
-            <Level.Item type="right">
-              <Button onClick={onConfirm} color="primary">
-                <FontAwesomeIcon icon={faPaperPlane}></FontAwesomeIcon>
-                <span className="btn-icon-text">confirm</span>
-              </Button>
-            </Level.Item>
-          </Level>
-        </Section>
-      </Container>
-    </Section>
+      </div>
+      <Button onClick={onBack}>
+        <span>back</span>
+      </Button>
+      <Button onClick={onConfirm} color="primary">
+        <span>confirm</span>
+      </Button>
+    </React.Fragment>
   );
 }
 

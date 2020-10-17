@@ -1,65 +1,37 @@
 import React, { Fragment } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import * as Form from 'react-bulma-components/lib/components/form';
-import Button from 'react-bulma-components/lib/components/button';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { useForm } from 'react-hook-form';
+import Button from '@material-ui/core/Button';
+import TextField from '@material-ui/core/TextField';
 
 const LoginForm = ({ errorMessage, onSubmit }) => {
-  const { handleSubmit, errors, control, formState } = useForm({ mode: 'onChange' });
+  const { handleSubmit, register, errors, formState } = useForm({ mode: 'onChange' });
 
   return (
     <Fragment>
-      {
-        !!errorMessage &&
+      {!!errorMessage &&
         <p style={{ color: "red" }}>{errorMessage}</p>
       }
       <div style={{ maxWidth: "500px" }}>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Form.Field>
-            <label>Email address</label>
-            <Form.Control>
-              <Controller
-                as={Form.Input}
-                name="email"
-                type="email"
-                placeholder="email address"
-                defaultValue=""
-                control={control}
-                rules={{ required: true }}
-              />
-            </Form.Control>
-            <Form.Help color="danger">
-              {errors.FirstName && "This field is required"}
-            </Form.Help>
-          </Form.Field>
-          <div>
-            <Form.Field>
-              <label>Password</label>
-              <Form.Control>
-                <Controller
-                  as={Form.Input}
-                  name="password"
-                  type="password"
-                  control={control}
-                  placeholder="enter password"
-                  rules={{ required: true }}
-                />
-              </Form.Control>
-            </Form.Field>
-          </div>
+          <TextField
+            name="email"
+            type="email"
+            inputRef={register({ required: true })}
+            label="email address"
+            variant="outlined" />
+          <TextField
+            name="password"
+            type="password"
+            inputRef={register({ required: true })}
+            label="password"
+            variant="outlined" />
           <div style={{paddingTop: "13px"}}>
-            <Form.Control>
-              <Button
-                color="primary"
-                type="submit"
-                value="Submit"
-                disabled={!formState.isValid}
-              >
-                <FontAwesomeIcon icon={faChevronRight}></FontAwesomeIcon>
-                <span className="btn-icon-text">login</span>
-              </Button>
-            </Form.Control>
+            <Button
+              type="submit"
+              disabled={!formState.isValid}
+            >
+            <span>login</span>
+          </Button>
           </div>
         </form>
       </div>

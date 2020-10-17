@@ -14,6 +14,8 @@ const Login = () => {
   const [busyMessage, setBusyMessage] = useState(null);
 
   const login = async (data) => {
+    console.log(data)
+
     setLoginErrorMessage(null);
     setBusyMessage('login in...');
 

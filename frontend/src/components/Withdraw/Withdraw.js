@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import Section from 'react-bulma-components/lib/components/section';
-import Container from 'react-bulma-components/lib/components/container';
 import Spinner from '../Spinner/Spinner';
 import app from '../../base';
 import WithdrawForm from './WithdrawForm/WithdrawForm';
@@ -62,13 +60,9 @@ const Withdraw = () => {
 
   if (busyMessage) {
     return (
-      <Section>
-        <Container>
-          <div style={{ paddingTop: "50px", paddingBottom: "20px" }}>
-            <Spinner message={busyMessage} />
-          </div>
-        </Container>
-      </Section>
+      <div style={{ paddingTop: "50px", paddingBottom: "20px" }}>
+        <Spinner message={busyMessage} />
+      </div>
     );
   }
 

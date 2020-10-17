@@ -1,17 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
-import * as Form from 'react-bulma-components/lib/components/form';
-import Level from 'react-bulma-components/lib/components/level';
-import Section from 'react-bulma-components/lib/components/section';
-import Container from 'react-bulma-components/lib/components/container';
-import Button from 'react-bulma-components/lib/components/button';
-import Heading from 'react-bulma-components/lib/components/heading';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { useForm } from 'react-hook-form';
+import Typography from '@material-ui/core/Typography';
+import Button from '@material-ui/core/Button';
+import TextField from '@material-ui/core/TextField';
 
 const WithdrawForm = ({ errorMessage, onSubmit }) => {
-  const { handleSubmit, errors, control, formState, setValue } = useForm({ mode: 'onChange' });
+  const { handleSubmit, register, errors, formState, setValue } = useForm({ mode: 'onChange' });
   const [oldAmount, setOldAmount] = useState(undefined);
   const amountRegex =/^(\d+(\.\d{0,2})?|\.?\d{1,2})$/;
 
@@ -31,68 +26,42 @@ const WithdrawForm = ({ errorMessage, onSubmit }) => {
   }
 
   return (
-    <Section>
-      <Container>
-        <Heading>Withdraw</Heading>
-        {
-          !!errorMessage &&
-          <p style={{ color: "red" }}>{errorMessage}</p>
-        }
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Form.Field>
-            <label>Address</label>
-            <Form.Control>
-              <Controller
-                as={Form.Input}
-                name="address"
-                placeholder="TRTL address"
-                defaultValue=""
-                control={control}
-                rules={{ required: true }}
-              />
-            </Form.Control>
-            <Form.Help color="danger">
-              {errors.FirstName && "This field is required"}
-            </Form.Help>
-          </Form.Field>
-          <Form.Field style={{ maxWidth: "400px", display: "inline-block" }}>
-            <label>Amount</label>
-            <Form.Control onChange={e => AmountInputHandler(e.target)}>
-              <Controller
-                as={Form.Input}
-                name="amount"
-                control={control}
-                placeholder="0.00"
-                rules={{ required: true }}
-              />
-            </Form.Control>
-          </Form.Field>
-          <Form.Field>
-            <Level>
-            <Level.Item type="left">
-              <Button to="/" renderAs={Link}>
-                <FontAwesomeIcon icon={faChevronLeft}></FontAwesomeIcon>
-                <span className="btn-icon-text">back</span>
-              </Button>
-            </Level.Item>
-            <Level.Item type="right">
-            <Form.Control>
-              <Button
-                color="primary"
-                type="submit"
-                value="Submit"
-                disabled={!formState.isValid}
-              >
-                <FontAwesomeIcon icon={faChevronRight}></FontAwesomeIcon>
-                <span className="btn-icon-text">continue</span>
-              </Button>
-            </Form.Control>
-            </Level.Item>
-            </Level>
-          </Form.Field>
-        </form>
-      </Container>
-    </Section>
+    <React.Fragment>
+      <Typography variant="h4" component="h4">
+        Withdraw
+      </Typography>
+      {
+        !!errorMessage &&
+        <p style={{ color: "red" }}>{errorMessage}</p>
+      }
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <TextField
+          name="address"
+          type="text"
+          inputRef={register({ required: true })}
+          label="TRTL address"
+          variant="outlined" />
+        <TextField
+          name="amount"
+          type="number"
+          inputRef={register({ required: true })}
+          onChange={e => AmountInputHandler(e.target)}
+          label="amount"
+          placeholder="0.00"
+          variant="outlined" />
+        <Button to="/" renderAs={Link}>
+          <span>back</span>
+        </Button>
+        <Button
+          color="primary"
+          type="submit"
+          value="Submit"
+          disabled={!formState.isValid}
+        >
+          <span>continue</span>
+        </Button>
+      </form>
+    </React.Fragment>
   );
 }
 

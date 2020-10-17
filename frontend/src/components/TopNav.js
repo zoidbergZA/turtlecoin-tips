@@ -24,12 +24,8 @@ import app from '../base';
 import logo from '../assets/logo-med.png';
 
 import Home from './Home';
-import Start from './Start';
 import Withdraw from './Withdraw/Withdraw';
 import Help from './Help';
-import PrivacyPolicy from './PrivacyPolicy';
-import Login from './Login/Login';
-import UserManagement from './UserManagement';
 import { TurtleAccountProvider } from '../contexts/Account'
 import PrivateRoute from '../hoc/PrivateRoute';
 
@@ -154,11 +150,6 @@ function TopNav() {
             <PrivateRoute exact path="/history" component={History}/>
             <PrivateRoute exact path="/help" component={Help}/>
           </TurtleAccountProvider>
-            <Route exact path="/start" render={(props) => <Start {...props} email={false} github={true} />}/>
-            <Route exact path="/github" render={(props) => <Start {...props} github={true} />}/>
-            <Route exact path="/login" component={Login}/>
-            <Route exact path="/privacy-policy" component={PrivacyPolicy}/>
-            <Route exact path="/user-mgmt" component={UserManagement}/>
         </Container>
       </div>
     </div>

@@ -46,3 +46,7 @@ export async function signInWithRedirect(provider) {
   await app.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION);
   await app.auth().signInWithRedirect(provider);
 }
+
+export async function signOut() {
+  await app.auth().signOut();
+}

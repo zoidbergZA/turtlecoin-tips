@@ -1,8 +1,5 @@
-import React, { useContext, useState } from 'react'
-import { useLocation } from 'react-router';
-import { BrowserRouter as Router, Route } from 'react-router-dom';
-import { Link } from 'react-router-dom';
-import Box from '@material-ui/core/Box';
+import React, { useState } from 'react'
+import { Redirect, Switch, useHistory } from 'react-router-dom';
 import Container from '@material-ui/core/Container';
 import AppBar from '@material-ui/core/AppBar';
 import Typography from '@material-ui/core/Typography';
@@ -18,11 +15,10 @@ import { makeStyles, useTheme } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
-import History from '../components/History/History';
-import { AuthContext } from '../contexts/Auth';
-import app from '../base';
-import logo from '../assets/logo-med.png';
 
+import AppIcon from './SvgIcons/AppIcon';
+import History from './History/History';
+import { signOut } from '../base';
 import Home from './Home';
 import Withdraw from './Withdraw/Withdraw';
 import Help from './Help';
@@ -43,12 +39,22 @@ const useStyles = makeStyles(theme => ({
   },
   appBar: {
     zIndex: theme.zIndex.drawer + 1,
+    backgroundColor: '#ffffff'
   },
   menuButton: {
     marginRight: theme.spacing(2),
     [theme.breakpoints.up('md')]: {
       display: 'none',
     },
+  },
+  homeButton: {
+    marginRight: theme.spacing(1),
+    [theme.breakpoints.down('sm')]: {
+      display: 'none',
+    },
+  },
+  actionButton: {
+    margin: theme.spacing(1)
   },
   toolbar: theme.mixins.toolbar,
   drawerPaper: {
@@ -65,24 +71,38 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-function TopNav() {
-  const dummyCategories = ['Hokusai', 'Hiroshige', 'Utamaro', 'Kuniyoshi', 'Yoshitoshi']
+function UserNav() {
   const classes = useStyles();
   const theme = useTheme();
+  const history = useHistory();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   function handleDrawerToggle() {
     setMobileOpen(!mobileOpen)
   }
 
+  const homeClickHandler = () => {
+    history.push('/');
+  }
+
+  const receiveClickHandler = () => {
+    console.log('show receive QR code and address...');
+  }
+
+  const sendClickHandler = () => {
+    history.push('/send');
+  }
+
+  const signOutHandler = async () => {
+    await signOut();
+  }
+
   const drawer = (
     <div>
       <List>
-        {dummyCategories.map((text, index) => (
-          <ListItem button key={text}>
-            <ListItemText primary={text} />
-          </ListItem>
-        ))}
+        <ListItem button>
+          <ListItemText primary="Sign out" onClick={signOutHandler} />
+      </ListItem>
       </List>
     </div>
   );
@@ -90,7 +110,7 @@ function TopNav() {
   return (
     <div className={classes.root}>
       <CssBaseline />
-      <AppBar position="fixed" className={classes.appBar}>
+      <AppBar position="fixed" className={classes.appBar} color='default'>
         <Toolbar>
           <IconButton
             color="inherit"
@@ -101,9 +121,33 @@ function TopNav() {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap>
-            Responsive drawer
-          </Typography>
+          <IconButton
+            onClick={homeClickHandler}
+            className={classes.homeButton}
+          >
+            <AppIcon color="primary"/>
+          </IconButton>
+          <div style={{ flex: 1 }}></div>
+          <Button
+            variant="contained"
+            color="primary"
+            className={classes.actionButton}
+            onClick={sendClickHandler}
+          >
+            <Typography variant="body1">
+              Send
+            </Typography>
+          </Button>
+          <Button
+            variant="contained"
+            color="secondary"
+            className={classes.actionButton}
+            onClick={receiveClickHandler}
+          >
+            <Typography variant="body1">
+              Receive
+            </Typography>
+          </Button>
         </Toolbar>
       </AppBar>
 
@@ -145,10 +189,13 @@ function TopNav() {
       <div className={classes.toolbar} />
         <Container maxWidth='md'>
           <TurtleAccountProvider>
-            <PrivateRoute exact path="/" component={Home}/>
-            <PrivateRoute exact path="/withdraw" component={Withdraw}/>
-            <PrivateRoute exact path="/history" component={History}/>
-            <PrivateRoute exact path="/help" component={Help}/>
+            <Switch>
+              <PrivateRoute exact path="/" component={Home}/>
+              <PrivateRoute exact path="/send" component={Withdraw}/>
+              <PrivateRoute exact path="/history" component={History}/>
+              <PrivateRoute exact path="/help" component={Help}/>
+              <Redirect to="/" />
+            </Switch>
           </TurtleAccountProvider>
         </Container>
       </div>
@@ -156,61 +203,4 @@ function TopNav() {
   );
 }
 
-// const TopNav = () => {
-//   const classes = useStyles();
-
-//   const { currentUser } = useContext(AuthContext);
-//   const [ dropdownOpen, setDropdownOpen ] = useState(false);
-//   const location = useLocation();
-
-//   if (!currentUser || location.pathname === '/user-mgmt') {
-//     return null;
-//   }
-
-//   // const menuClickHandler = () => {
-//   //   setDropdownOpen(!dropdownOpen);
-//   // }
-
-
-//   return (
-//     <div className={classes.root}>
-//       <AppBar position="static">
-//         <Toolbar>
-//           <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
-//             <MenuIcon />
-//           </IconButton>
-//           <Typography variant="h6" className={classes.title}>
-//             News
-//           </Typography>
-//           <Button color="inherit">Login</Button>
-//         </Toolbar>
-//       </AppBar>
-//     </div>
-//   );
-
-//   // return (
-//   //   <Navbar fixed="top" active={dropdownOpen}>
-//   //     <Navbar.Brand>
-//   //       <Navbar.Item renderAs={Link} to="/">
-//   //         <img src={logo} alt="logo" width="28" height="28" /><span>tips</span>
-//   //       </Navbar.Item>
-//   //       <Navbar.Burger onClick={menuClickHandler} />
-//   //     </Navbar.Brand>
-//   //     <Navbar.Menu>
-//   //       <Navbar.Container position="end">
-//   //         <Navbar.Item renderAs="span">
-//   //           {currentUser.username}
-//   //         </Navbar.Item>
-//   //         <Navbar.Item onClick={() => app.auth().signOut()}>
-//   //           <Icon>
-//   //             <FontAwesomeIcon icon={faLock} />
-//   //           </Icon>
-//   //           <span>Lock</span>
-//   //         </Navbar.Item>
-//   //       </Navbar.Container>
-//   //     </Navbar.Menu>
-//   //   </Navbar>
-//   // )
-// }
-
-export default TopNav;
+export default UserNav;

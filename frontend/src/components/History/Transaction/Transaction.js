@@ -34,6 +34,9 @@ const useStyles = makeStyles(theme => ({
   itemGap: {
    marginLeft: theme.spacing(1)
   },
+  infoText: {
+    marginLeft: theme.spacing(2)
+  },
   time: {
     minWidth: '80px'
   },
@@ -66,9 +69,11 @@ const Transaction = ({ tx, width }) => {
         </Typography>
         {getPlatformIcon(tx, classes)}
         <Hidden xsDown>
-          <Typography variant="body2" component="span" className={classes.itemGap}>
-            {getInfoText(tx)}
-          </Typography>
+          <p className={classes.infoText}>
+            <Typography variant="body2" component="span" className={classes.itemGap}>
+              {getInfoText(tx)}
+            </Typography>
+          </p>
         </Hidden>
         <Hidden xsDown mdUp>
           {getTxHash(tx, true, classes)}

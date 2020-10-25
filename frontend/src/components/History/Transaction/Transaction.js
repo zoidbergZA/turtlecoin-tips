@@ -1,15 +1,17 @@
 import React from 'react';
 import Moment from 'react-moment';
-import { Card, CardContent, Typography, makeStyles, Hidden } from '@material-ui/core';
+import { Card, CardContent, Typography, makeStyles, useTheme, Hidden } from '@material-ui/core';
 import withWidth from '@material-ui/core/withWidth';
 import ArrowUpwardRoundedIcon from '@material-ui/icons/ArrowUpwardRounded';
 import ArrowDownwardRoundedIcon from '@material-ui/icons/ArrowDownwardRounded';
+
+import { toAmountText } from '../../../utils';
 import styles from './Transaction.module.scss';
 import AppIcon from 'components/SvgIcons/AppIcon';
 import GithubIcon from 'components/SvgIcons/GithubIcon';
 import CopyBox from 'components/CopyBox/CopyBox';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles(theme => ({
   content: {
     display: 'flex',
     flexDirection: 'row',
@@ -20,14 +22,17 @@ const useStyles = makeStyles({
     flexGrow: 1
   },
   copyBox: {
-    backgroundColor: '#ff0000',
+    margin: theme.spacing(1),
     flexFlow: 'row wrap',
     overflow: 'hidden',
     wordWrap: 'break-word',
     overflowWrap: 'break-word'
   },
+  amount: {
+    minWidth: '100px'
+  },
   itemGap: {
-   marginLeft: '10px'
+   marginLeft: theme.spacing(1)
   },
   time: {
     minWidth: '80px'
@@ -36,7 +41,7 @@ const useStyles = makeStyles({
     fontFamily: 'Hack',
     fontSize: 'small'
   }
-});
+}));
 
 const Transaction = ({ tx, width }) => {
   const txInfoStyles = [styles.info];
@@ -72,8 +77,8 @@ const Transaction = ({ tx, width }) => {
           {getTxHash(tx, false, classes)}
         </Hidden>
         <div className={classes.spacer}></div>
-        <Typography variant="body2" component="span">
-          {getAmountText(tx)}
+        <Typography variant="body2" component="span" className={classes.amount}>
+          {getTxAmount(tx)}
         </Typography>
       </CardContent>
     </Card>
@@ -125,14 +130,14 @@ function getInfoText(tx) {
   }
 }
 
-function getAmountText(tx) {
+function getTxAmount(tx) {
   let text = tx.status === 'confirming' ? "(confirming) " : "";
 
   if (tx.amount > 0) {
     text += '+';
   }
 
-  text += `${((tx.amount + tx.fee) / 100).toFixed(2)} TRTL`;
+  text += `${toAmountText(tx.amount + tx.fee)}`;
 
   return text;
 }

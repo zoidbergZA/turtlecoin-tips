@@ -24,7 +24,6 @@ import { signOut } from '../base';
 import Home from './Home';
 import Withdraw from './Withdraw/Withdraw';
 import Help from './Help';
-import { TurtleAccountProvider } from '../contexts/Account'
 import PrivateRoute from '../hoc/PrivateRoute';
 
 const drawerWidth = 240;
@@ -74,8 +73,8 @@ const useStyles = makeStyles(theme => ({
 }));
 
 function UserNav() {
-  const classes = useStyles();
   const theme = useTheme();
+  const classes = useStyles();
   const history = useHistory();
   const { turtleAccount } = useContext(TurtleAccountContext);
   const [mobileOpen, setMobileOpen] = useState(false);

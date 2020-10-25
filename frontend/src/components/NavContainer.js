@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { Route, Redirect, Switch } from 'react-router-dom';
 
 import { AuthContext } from '../contexts/Auth';
+import { TurtleAccountProvider } from '../contexts/Account';
 import UserNav from './UserNav';
 import Start from './Start';
 import PrivacyPolicy from './PrivacyPolicy';
@@ -14,7 +15,9 @@ function NavContainer() {
   return (
     <React.Fragment>
       {!!currentUser ? (
-        <UserNav/>
+        <TurtleAccountProvider>
+          <UserNav />
+        </TurtleAccountProvider>
       ) : (
         <Switch>
           <Route exact path="/start" render={(props) => <Start {...props} email={false} github={true} />}/>

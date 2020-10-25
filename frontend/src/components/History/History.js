@@ -78,14 +78,7 @@ const History = () => {
     history = <Spinner/>
   }
 
-  return (
-    <React.Fragment>
-    <Typography variant="h4" component="h4">
-      Transaction history
-    </Typography>
-      {history}
-    </React.Fragment>
-  );
+  return history;
 }
 
 export default History;

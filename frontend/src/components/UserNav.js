@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { Redirect, Switch, useHistory } from 'react-router-dom';
 import Container from '@material-ui/core/Container';
 import AppBar from '@material-ui/core/AppBar';
@@ -15,7 +15,9 @@ import { makeStyles, useTheme } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
+import Dialog from '@material-ui/core/Dialog';
 
+import { TurtleAccountContext } from '../contexts/Account';
 import AppIcon from './SvgIcons/AppIcon';
 import History from './History/History';
 import { signOut } from '../base';
@@ -75,7 +77,9 @@ function UserNav() {
   const classes = useStyles();
   const theme = useTheme();
   const history = useHistory();
+  const { turtleAccount } = useContext(TurtleAccountContext);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [receiveDialogOpen, setReceiveDialogOpen] = useState(false);
 
   function handleDrawerToggle() {
     setMobileOpen(!mobileOpen)
@@ -86,7 +90,14 @@ function UserNav() {
   }
 
   const receiveClickHandler = () => {
-    console.log('show receive QR code and address...');
+    if (!turtleAccount)
+      return;
+
+    setReceiveDialogOpen(true);
+  }
+
+  const handleDialogClose = () => {
+    setReceiveDialogOpen(false);
   }
 
   const sendClickHandler = () => {
@@ -107,8 +118,21 @@ function UserNav() {
     </div>
   );
 
+  const receiveDialog = (
+    <Dialog fullScreen open={receiveDialogOpen} onClose={handleDialogClose}>
+      <Container maxWidth='md'>
+        <div style={{ backgroundColor: 'red' }}>
+          <div>
+            <img src={turtleAccount.depositQrCode} />
+          </div>
+        </div>
+      </Container>
+    </Dialog>
+  );
+
   return (
     <div className={classes.root}>
+      {receiveDialog}
       <CssBaseline />
       <AppBar position="fixed" className={classes.appBar} color='default'>
         <Toolbar>
@@ -186,17 +210,15 @@ function UserNav() {
         </Hidden>
       </nav>
       <div className={classes.content}>
-      <div className={classes.toolbar} />
+        <div className={classes.toolbar} />
         <Container maxWidth='md'>
-          <TurtleAccountProvider>
-            <Switch>
-              <PrivateRoute exact path="/" component={Home}/>
-              <PrivateRoute exact path="/send" component={Withdraw}/>
-              <PrivateRoute exact path="/history" component={History}/>
-              <PrivateRoute exact path="/help" component={Help}/>
-              <Redirect to="/" />
-            </Switch>
-          </TurtleAccountProvider>
+          <Switch>
+            <PrivateRoute exact path="/" component={Home}/>
+            <PrivateRoute exact path="/send" component={Withdraw}/>
+            <PrivateRoute exact path="/history" component={History}/>
+            <PrivateRoute exact path="/help" component={Help}/>
+            <Redirect to="/" />
+          </Switch>
         </Container>
       </div>
     </div>

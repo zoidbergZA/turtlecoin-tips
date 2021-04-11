@@ -49,6 +49,31 @@ const Start = ({ history, email, github }) => {
     paddingLeft: "10px"
   }
 
+  // return (
+  //   <Section>
+  //     <Container>
+  //       <Heading>TurtleCoin Tips</Heading>
+  //       <div style={{ margin: "40px" }}>
+  //         <img src={logo} width="200" alt="logo" />
+  //       </div>
+  //       <div style={btnsContainer}>
+  //         {email &&
+  //           <Button style={btnStyle} onClick={emailLoginHandler}>
+  //             <FontAwesomeIcon icon={faEnvelope}></FontAwesomeIcon>
+  //             <span style={btnText}> Login with email</span>
+  //           </Button>
+  //         }
+  //         {github &&
+  //           <Button style={btnStyle} onClick={githubLoginHandler}>
+  //             <FontAwesomeIcon icon={faGithub}></FontAwesomeIcon>
+  //             <span style={btnText}> Login with Github</span>
+  //           </Button>
+  //         }
+  //       </div>
+  //     </Container>
+  //   </Section>
+  // );
+
   return (
     <Section>
       <Container>
@@ -57,18 +82,7 @@ const Start = ({ history, email, github }) => {
           <img src={logo} width="200" alt="logo" />
         </div>
         <div style={btnsContainer}>
-          {email &&
-            <Button style={btnStyle} onClick={emailLoginHandler}>
-              <FontAwesomeIcon icon={faEnvelope}></FontAwesomeIcon>
-              <span style={btnText}> Login with email</span>
-            </Button>
-          }
-          {github &&
-            <Button style={btnStyle} onClick={githubLoginHandler}>
-              <FontAwesomeIcon icon={faGithub}></FontAwesomeIcon>
-              <span style={btnText}> Login with Github</span>
-            </Button>
-          }
+          <p>coming soon</p>
         </div>
       </Container>
     </Section>

@@ -22,10 +22,10 @@
     "cors": "^2.8.5",
     "crypto": "^1.0.1",
     "express": "^4.17.1",
-    "firebase-admin": "^8.13.0",
+    "firebase-admin": "^11.4.1",
     "firebase-functions": "^3.6.1",
     "lodash.groupby": "^4.6.0",
-    "probot": "^9.11.5",
+    "probot": "^12.2.9",
     "trtl-apps": "^0.10.0"
   },
   "devDependencies": {
